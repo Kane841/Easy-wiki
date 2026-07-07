@@ -46,16 +46,18 @@ public class NotificationService {
 
         wsSessionManager.pushNotification(notification, event.getTargetUrl());
 
-        Map<String, String> fcmData = new HashMap<>();
-        fcmData.put("notificationId", String.valueOf(notification.getId()));
-        fcmData.put("eventType", event.getType().name());
-        if (event.getTargetUrl() != null) {
-            fcmData.put("targetUrl", event.getTargetUrl());
+        if (!wsSessionManager.hasActiveSession(event.getUserId())) {
+            Map<String, String> fcmData = new HashMap<>();
+            fcmData.put("notificationId", String.valueOf(notification.getId()));
+            fcmData.put("eventType", event.getType().name());
+            if (event.getTargetUrl() != null) {
+                fcmData.put("targetUrl", event.getTargetUrl());
+            }
+            if (event.getGroupId() != null) {
+                fcmData.put("groupId", String.valueOf(event.getGroupId()));
+            }
+            fcmPushService.send(event.getUserId(), event.getTitle(), event.getBody(), fcmData);
         }
-        if (event.getGroupId() != null) {
-            fcmData.put("groupId", String.valueOf(event.getGroupId()));
-        }
-        fcmPushService.send(event.getUserId(), event.getTitle(), event.getBody(), fcmData);
 
         return notification;
     }
