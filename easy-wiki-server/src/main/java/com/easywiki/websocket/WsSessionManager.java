@@ -1,6 +1,5 @@
 package com.easywiki.websocket;
 
-import com.easywiki.dto.websocket.NotificationWsPayload;
 import com.easywiki.dto.websocket.WsMessage;
 import com.easywiki.entity.Notification;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +12,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,8 +62,12 @@ public class WsSessionManager {
         }
     }
 
+    public void broadcastToGroupMembers(List<Long> memberUserIds, WsMessage message) {
+        broadcastToUsers(memberUserIds, message);
+    }
+
     public void pushNotification(Notification notification, String targetUrl) {
-        NotificationWsPayload payload = new NotificationWsPayload(
+        var payload = new com.easywiki.dto.websocket.NotificationWsPayload(
                 notification.getId(),
                 notification.getType(),
                 notification.getBody(),
