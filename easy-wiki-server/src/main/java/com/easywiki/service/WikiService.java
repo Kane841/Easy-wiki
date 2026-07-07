@@ -1,9 +1,14 @@
 package com.easywiki.service;
 
+import com.easywiki.dto.event.NotificationEvent;
 import com.easywiki.dto.response.WikiTreeNodeResponse;
+import com.easywiki.entity.GroupMember;
 import com.easywiki.entity.WikiPage;
+import com.easywiki.enums.NotificationEventType;
 import com.easywiki.exception.BusinessException;
 import com.easywiki.exception.ConflictException;
+import com.easywiki.repository.GroupMemberRepository;
+import com.easywiki.repository.UserRepository;
 import com.easywiki.repository.WikiPageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +24,20 @@ public class WikiService {
 
     private final WikiPageRepository wikiPageRepository;
     private final GroupMembershipService membershipService;
+    private final GroupMemberRepository memberRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
-    public WikiService(WikiPageRepository wikiPageRepository, GroupMembershipService membershipService) {
+    public WikiService(WikiPageRepository wikiPageRepository,
+                       GroupMembershipService membershipService,
+                       GroupMemberRepository memberRepository,
+                       NotificationService notificationService,
+                       UserRepository userRepository) {
         this.wikiPageRepository = wikiPageRepository;
         this.membershipService = membershipService;
+        this.memberRepository = memberRepository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     public List<WikiTreeNodeResponse> getTree(Long groupId, Long userId) {
@@ -65,7 +80,9 @@ public class WikiService {
         }
         page.setTitle(title);
         page.setContent(content != null ? content : "");
-        return wikiPageRepository.save(page);
+        page = wikiPageRepository.save(page);
+        notifyWikiUpdated(groupId, userId, page);
+        return page;
     }
 
     @Transactional
@@ -132,6 +149,26 @@ public class WikiService {
         nodes.sort(Comparator.comparingInt(WikiTreeNodeResponse::getSortOrder));
         for (WikiTreeNodeResponse node : nodes) {
             sortTree(node.getChildren());
+        }
+    }
+
+    private void notifyWikiUpdated(Long groupId, Long editorId, WikiPage page) {
+        String editorName = userRepository.findById(editorId)
+                .map(u -> u.getUsername())
+                .orElse("成员");
+        for (GroupMember member : memberRepository.findByGroupId(groupId)) {
+            if (member.getUserId().equals(editorId)) {
+                continue;
+            }
+            notificationService.publish(new NotificationEvent(
+                    member.getUserId(),
+                    groupId,
+                    NotificationEventType.WIKI_UPDATED,
+                    "Wiki 更新",
+                    editorName + " 更新了文档「" + page.getTitle() + "」",
+                    null,
+                    "/groups/" + groupId + "/wiki/pages/" + page.getId()
+            ));
         }
     }
 }

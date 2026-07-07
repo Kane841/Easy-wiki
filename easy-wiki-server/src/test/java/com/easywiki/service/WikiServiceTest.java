@@ -40,8 +40,9 @@ class WikiServiceTest {
     @Test
     void updateWithStaleVersionThrowsConflict() {
         WikiPage page = wikiService.createPage(groupId, userId, null, "标题", "# content");
-        wikiService.updatePage(groupId, userId, page.getId(), "新标题", "# new", page.getVersion());
-        assertThatThrownBy(() -> wikiService.updatePage(groupId, userId, page.getId(), "x", "y", page.getVersion()))
+        Integer originalVersion = page.getVersion();
+        wikiService.updatePage(groupId, userId, page.getId(), "新标题", "# new", originalVersion);
+        assertThatThrownBy(() -> wikiService.updatePage(groupId, userId, page.getId(), "x", "y", originalVersion))
                 .isInstanceOf(ConflictException.class);
     }
 

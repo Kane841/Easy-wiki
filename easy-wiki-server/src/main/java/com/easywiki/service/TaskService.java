@@ -1,14 +1,17 @@
 package com.easywiki.service;
 
+import com.easywiki.dto.event.NotificationEvent;
 import com.easywiki.entity.Task;
 import com.easywiki.entity.TaskLog;
 import com.easywiki.enums.AssignmentStatus;
+import com.easywiki.enums.NotificationEventType;
 import com.easywiki.enums.TaskPriority;
 import com.easywiki.enums.TaskStatus;
 import com.easywiki.exception.BusinessException;
 import com.easywiki.repository.GroupMemberRepository;
 import com.easywiki.repository.TaskLogRepository;
 import com.easywiki.repository.TaskRepository;
+import com.easywiki.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,15 +25,21 @@ public class TaskService {
     private final TaskLogRepository taskLogRepository;
     private final GroupMembershipService membershipService;
     private final GroupMemberRepository memberRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     public TaskService(TaskRepository taskRepository,
                        TaskLogRepository taskLogRepository,
                        GroupMembershipService membershipService,
-                       GroupMemberRepository memberRepository) {
+                       GroupMemberRepository memberRepository,
+                       NotificationService notificationService,
+                       UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.taskLogRepository = taskLogRepository;
         this.membershipService = membershipService;
         this.memberRepository = memberRepository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -57,6 +66,9 @@ public class TaskService {
 
         task = taskRepository.save(task);
         logAssignmentChange(task, creatorId, "CREATE", null, task.getAssignmentStatus());
+        if (assigneeId != null) {
+            notifyTaskAssigned(task, creatorId);
+        }
         return task;
     }
 
@@ -117,6 +129,7 @@ public class TaskService {
         task.setAssignmentStatus(AssignmentStatus.PENDING_ACCEPT);
         task = taskRepository.save(task);
         logAssignmentChange(task, operatorId, "ASSIGN", old, AssignmentStatus.PENDING_ACCEPT);
+        notifyTaskAssigned(task, operatorId);
         return task;
     }
 
@@ -135,6 +148,7 @@ public class TaskService {
         task.setAssignmentStatus(AssignmentStatus.ACCEPTED);
         task = taskRepository.save(task);
         logAssignmentChange(task, userId, "ACCEPT", old, AssignmentStatus.ACCEPTED);
+        notifyTaskAccepted(task, userId);
         return task;
     }
 
@@ -224,5 +238,38 @@ public class TaskService {
         log.setToStatus(to);
         log.setOperatorId(operatorId);
         taskLogRepository.save(log);
+    }
+
+    private void notifyTaskAssigned(Task task, Long operatorId) {
+        if (task.getAssigneeId() == null) {
+            return;
+        }
+        String operatorName = userRepository.findById(operatorId)
+                .map(u -> u.getUsername())
+                .orElse("成员");
+        notificationService.publish(new NotificationEvent(
+                task.getAssigneeId(),
+                task.getGroupId(),
+                NotificationEventType.TASK_ASSIGNED,
+                "任务指派",
+                operatorName + " 将任务「" + task.getTitle() + "」指派给你",
+                null,
+                "/groups/" + task.getGroupId() + "/tasks/" + task.getId()
+        ));
+    }
+
+    private void notifyTaskAccepted(Task task, Long assigneeId) {
+        String assigneeName = userRepository.findById(assigneeId)
+                .map(u -> u.getUsername())
+                .orElse("成员");
+        notificationService.publish(new NotificationEvent(
+                task.getCreatorId(),
+                task.getGroupId(),
+                NotificationEventType.TASK_ACCEPTED,
+                "任务已接取",
+                assigneeName + " 已接取任务「" + task.getTitle() + "」",
+                null,
+                "/groups/" + task.getGroupId() + "/tasks/" + task.getId()
+        ));
     }
 }

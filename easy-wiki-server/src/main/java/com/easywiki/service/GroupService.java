@@ -1,11 +1,14 @@
 package com.easywiki.service;
 
+import com.easywiki.dto.event.NotificationEvent;
 import com.easywiki.entity.Group;
 import com.easywiki.entity.GroupInvite;
 import com.easywiki.entity.GroupJoinRequest;
 import com.easywiki.entity.GroupMember;
 import com.easywiki.enums.JoinRequestStatus;
 import com.easywiki.enums.MemberRole;
+import com.easywiki.enums.NotificationEventType;
+import com.easywiki.repository.UserRepository;
 import com.easywiki.exception.BusinessException;
 import com.easywiki.exception.ConflictException;
 import com.easywiki.repository.GroupInviteRepository;
@@ -27,15 +30,21 @@ public class GroupService {
     private final GroupMemberRepository memberRepository;
     private final GroupJoinRequestRepository joinRequestRepository;
     private final GroupInviteRepository inviteRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     public GroupService(GroupRepository groupRepository,
                         GroupMemberRepository memberRepository,
                         GroupJoinRequestRepository joinRequestRepository,
-                        GroupInviteRepository inviteRepository) {
+                        GroupInviteRepository inviteRepository,
+                        NotificationService notificationService,
+                        UserRepository userRepository) {
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
         this.joinRequestRepository = joinRequestRepository;
         this.inviteRepository = inviteRepository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -116,7 +125,9 @@ public class GroupService {
         request.setUserId(userId);
         request.setReason(reason);
         request.setStatus(JoinRequestStatus.PENDING);
-        return joinRequestRepository.save(request);
+        request = joinRequestRepository.save(request);
+        notifyAdminsJoinRequest(groupId, userId);
+        return request;
     }
 
     @Transactional
@@ -140,7 +151,9 @@ public class GroupService {
         memberRepository.save(member);
 
         request.setStatus(JoinRequestStatus.APPROVED);
-        return joinRequestRepository.save(request);
+        request = joinRequestRepository.save(request);
+        notifyJoinRequestResult(request, NotificationEventType.JOIN_APPROVED, "入组申请已通过");
+        return request;
     }
 
     @Transactional
@@ -152,7 +165,9 @@ public class GroupService {
             throw new BusinessException(400, "申请已处理");
         }
         request.setStatus(JoinRequestStatus.REJECTED);
-        return joinRequestRepository.save(request);
+        request = joinRequestRepository.save(request);
+        notifyJoinRequestResult(request, NotificationEventType.JOIN_REJECTED, "入组申请已被拒绝");
+        return request;
     }
 
     public List<GroupJoinRequest> listPendingJoinRequests(Long groupId, Long adminUserId) {
@@ -197,5 +212,38 @@ public class GroupService {
         if (member.getRole() != MemberRole.ADMIN) {
             throw new BusinessException(403, "需要管理员权限");
         }
+    }
+
+    private void notifyAdminsJoinRequest(Long groupId, Long applicantId) {
+        String applicantName = userRepository.findById(applicantId)
+                .map(u -> u.getUsername())
+                .orElse("用户");
+        Group group = getGroup(groupId);
+        for (GroupMember admin : memberRepository.findByGroupId(groupId)) {
+            if (admin.getRole() == MemberRole.ADMIN) {
+                notificationService.publish(new NotificationEvent(
+                        admin.getUserId(),
+                        groupId,
+                        NotificationEventType.JOIN_REQUEST,
+                        "新的入组申请",
+                        applicantName + " 申请加入「" + group.getName() + "」",
+                        null,
+                        "/groups/" + groupId + "/join-requests"
+                ));
+            }
+        }
+    }
+
+    private void notifyJoinRequestResult(GroupJoinRequest request, NotificationEventType type, String title) {
+        Group group = getGroup(request.getGroupId());
+        notificationService.publish(new NotificationEvent(
+                request.getUserId(),
+                request.getGroupId(),
+                type,
+                title,
+                "你在「" + group.getName() + "」的入组申请已处理",
+                null,
+                "/groups/" + request.getGroupId()
+        ));
     }
 }
