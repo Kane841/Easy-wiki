@@ -1,39 +1,58 @@
 # Easy-wiki
 
-轻量化团队知识库与工作协同平台，包含 Spring Boot 后端与 Android Compose 客户端。
+轻量化团队知识库与工作协同平台 —— 面向小团队的 Wiki + 任务看板 + 群聊 + 通知 + AI Agent。
 
-## 项目简介
+## 项目进展（2026-07-07）
 
-Easy-wiki 面向小团队提供知识库管理、任务协同、群组协作与 AI Agent 辅助能力。本仓库为 monorepo 结构：
+| 项目 | 状态 |
+|------|------|
+| **V1.0 MVP 代码** | ✅ 已完成（23/23 Task） |
+| **开发分支** | `feature/easy-wiki-v1`（已推送 GitHub） |
+| **后端自动化测试** | ✅ 43 tests，0 failures |
+| **人工 E2E 验收** | ⏳ 待本机环境验证（MySQL / Android / Firebase / Agent API） |
+
+### 已实现能力
+
+- **后端（Spring Boot 3.2）**：JWT 认证、小组管理、Wiki（乐观锁）、任务看板（指派状态机）、群聊、WebSocket 实时通知、FCM 推送、DeepSeek Agent、定时提醒
+- **Android（Compose）**：登录/注册、小组列表、工作区五 Tab（Wiki / 任务 / 聊天 / 通知 / Agent）
+- **部署**：Docker Compose + 本地 MySQL 两套方案
+
+> 完整进度见 [`docs/superpowers/progress/2026-07-07-easy-wiki-v1-progress.md`](docs/superpowers/progress/2026-07-07-easy-wiki-v1-progress.md)  
+> E2E 验收见 [`docs/E2E-CHECKLIST.md`](docs/E2E-CHECKLIST.md)
+
+---
+
+## 工程结构
 
 ```
 Easy-wiki/
-├── prd/                    # 产品需求文档
-├── docs/superpowers/       # 设计文档与实施计划
-├── easy-wiki-server/       # Spring Boot 后端
-├── easy-wiki-android/      # Android Compose 客户端
-├── docker-compose.yml      # 后端 + MySQL 容器化部署
+├── prd/                         # 产品需求文档
+├── docs/superpowers/            # 设计、实施计划、进度总结
+├── easy-wiki-server/            # Spring Boot 后端
+├── easy-wiki-android/           # Android Compose 客户端
+├── docker-compose.yml           # MySQL + 后端容器化部署
 └── README.md
 ```
 
+---
+
 ## 环境要求
 
-| 工具 | 版本要求 | 说明 |
-|------|----------|------|
-| JDK | 17+（推荐 Java 17） | 后端编译与运行 |
-| Maven | 3.9+ | 后端构建 |
-| MySQL | 8.0 | 本地开发或 Docker 部署 |
-| Docker Desktop | 最新版（可选） | 容器化一键部署 |
-| Android Studio | 最新稳定版 | Android APK 构建与调试 |
+| 工具 | 版本 | 说明 |
+|------|------|------|
+| JDK | **17**（推荐） | Java 24 可用，但 Lombok 不兼容，本项目实体为手写 POJO |
+| Maven | 3.9+ | 后端构建与测试 |
+| MySQL | 8.0 | 本地开发必装（无 Docker 时） |
+| Docker Desktop | 可选 | 容器化一键部署 |
+| Android Studio | 可选 | 构建 / 调试 Android 客户端 |
 
-## 本地开发（无 Docker）
+---
 
-适用于未安装 Docker 或希望直接在本机调试后端的场景。
+## 本地部署与运行（推荐：无 Docker）
 
-### 1. 安装并配置 MySQL 8
+### 第一步：准备 MySQL
 
-1. 安装 MySQL 8.0（Windows 可使用 [MySQL Installer](https://dev.mysql.com/downloads/installer/)）。
-2. 创建数据库与用户：
+安装 MySQL 8.0 后，执行：
 
 ```sql
 CREATE DATABASE easywiki CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -42,15 +61,15 @@ GRANT ALL PRIVILEGES ON easywiki.* TO 'easywiki'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-默认连接配置见 `easy-wiki-server/src/main/resources/application.yml`：
+默认连接（见 `easy-wiki-server/src/main/resources/application.yml`）：
 
-- 地址：`localhost:3306`
-- 数据库：`easywiki`
-- 用户名 / 密码：`easywiki` / `easywiki`
+| 项 | 值 |
+|----|-----|
+| 地址 | `localhost:3306` |
+| 数据库 | `easywiki` |
+| 用户名 / 密码 | `easywiki` / `easywiki` |
 
-### 2. 创建上传目录
-
-后端默认将文件保存到 `D:/easy-wiki/uploads/`，启动前需手动创建：
+### 第二步：创建上传目录
 
 **Windows（PowerShell）：**
 
@@ -61,35 +80,27 @@ mkdir D:\easy-wiki\uploads\
 **Linux / macOS：**
 
 ```bash
-mkdir -p /path/to/your/uploads/
-export UPLOAD_PATH=/path/to/your/uploads/
+mkdir -p ~/easy-wiki/uploads/
+export UPLOAD_PATH=~/easy-wiki/uploads/
 ```
 
-### 3. 配置环境变量（可选）
-
-本地开发可使用 `application.yml` 中的默认值。如需覆盖，在启动前设置：
+### 第三步：启动后端
 
 ```powershell
-# Windows PowerShell 示例
-$env:JWT_SECRET = "your-production-secret-at-least-32-chars"
-$env:UPLOAD_PATH = "D:/easy-wiki/uploads/"
-$env:DEEPSEEK_API_KEY = "sk-xxx"
-$env:AGENT_ENABLED = "false"
-$env:FCM_CREDENTIALS = "D:/path/to/firebase-service-account.json"
-```
-
-### 4. 启动后端
-
-```bash
 cd easy-wiki-server
+
+# 可选：运行测试（预期 43 tests PASS）
+mvn test
+
+# 启动服务
 mvn spring-boot:run
 ```
 
-服务默认监听 `http://localhost:8080`。
+服务监听 **http://localhost:8080**。
 
-### 5. 验证健康检查
+### 第四步：验证
 
-```bash
+```powershell
 curl http://localhost:8080/api/v1/health
 ```
 
@@ -99,134 +110,94 @@ curl http://localhost:8080/api/v1/health
 {"code":0,"message":"ok","data":{"status":"UP"}}
 ```
 
-## Docker 部署
+### 第五步：快速 API 冒烟
 
-需要已安装 Docker Desktop 或 Docker Engine + Docker Compose。
+```powershell
+# 注册
+curl -X POST http://localhost:8080/api/v1/auth/register `
+  -H "Content-Type: application/json" `
+  -d '{\"username\":\"alice\",\"email\":\"alice@test.com\",\"password\":\"password123\"}'
 
-### 启动服务
-
-在项目根目录执行：
-
-```bash
-docker compose up --build -d
+# 登录（保存返回的 token）
+curl -X POST http://localhost:8080/api/v1/auth/login `
+  -H "Content-Type: application/json" `
+  -d '{\"username\":\"alice\",\"password\":\"password123\"}'
 ```
 
-该命令将：
+更多 curl 用例见 [`docs/E2E-CHECKLIST.md`](docs/E2E-CHECKLIST.md)。
 
-- 启动 MySQL 8.0（数据库 `easywiki`，用户 `easywiki` / `easywiki`）
-- 构建并启动 Spring Boot 应用（端口 `8080`）
-- 持久化 MySQL 数据与上传文件（Docker 卷 `mysql-data`、`upload-data`）
+---
 
-### 验证部署
+## Android 客户端运行
 
-```bash
-curl http://localhost:8080/api/v1/health
-```
-
-### 停止服务
-
-```bash
-docker compose down
-```
-
-如需同时删除数据卷（**会清空数据库与上传文件**）：
-
-```bash
-docker compose down -v
-```
-
-### Docker 环境变量
-
-可通过 `.env` 文件或 shell 环境变量传入，例如在项目根目录创建 `.env`：
-
-```env
-JWT_SECRET=your-production-secret-at-least-32-chars
-DEEPSEEK_API_KEY=sk-xxx
-AGENT_ENABLED=false
-```
-
-容器内 `UPLOAD_PATH` 固定为 `/data/uploads`（已通过卷 `upload-data` 持久化）。
-
-## Android 客户端构建
-
-1. 用 **Android Studio** 打开 `easy-wiki-android/` 目录。
-2. 等待 Gradle 同步完成。
-3. 配置后端地址：
-   - 模拟器访问本机后端：`http://10.0.2.2:8080`
-   - 真机访问：使用电脑局域网 IP，如 `http://192.168.1.100:8080`
-4. 连接设备或启动模拟器，点击 Run 运行 App。
+1. 用 **Android Studio** 打开 `easy-wiki-android/`
+2. Gradle Sync 完成后 Run
+3. **首次启动**配置服务端地址：
+   - 模拟器访问本机：`http://10.0.2.2:8080`
+   - 真机访问：`http://<电脑局域网IP>:8080`
+4. 注册/登录 → 创建小组 → 使用 Wiki / 任务 / 聊天 / 通知 / Agent
 
 命令行构建 Debug APK：
 
-```bash
+```powershell
 cd easy-wiki-android
-./gradlew assembleDebug
+.\gradlew.bat assembleDebug
 ```
 
-APK 输出路径：`easy-wiki-android/app/build/outputs/apk/debug/app-debug.apk`
+输出：`easy-wiki-android/app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+## Docker 部署（可选）
+
+需已安装 Docker Desktop：
+
+```bash
+docker compose up --build -d
+curl http://localhost:8080/api/v1/health
+```
+
+停止服务：`docker compose down`  
+清空数据卷：`docker compose down -v`
+
+---
 
 ## 环境变量
 
-| 变量 | 说明 | 本地开发默认值 | Docker 默认值 |
-|------|------|----------------|---------------|
-| `JWT_SECRET` | JWT 签名密钥（生产环境至少 32 字符） | `dev-secret-change-in-production-min-32-chars!!` | 同左，可通过 `.env` 覆盖 |
-| `UPLOAD_PATH` | 文件上传存储目录 | `D:/easy-wiki/uploads/` | `/data/uploads` |
-| `DEEPSEEK_API_KEY` | DeepSeek API 密钥（启用 Agent 时必填） | 空 | 空，通过 `.env` 设置 |
-| `AGENT_ENABLED` | 是否启用 AI Agent 功能 | `false` | `false` |
-| `FCM_CREDENTIALS` | Firebase 服务账号 JSON 文件路径（推送通知） | — | 暂未挂载，后续按需配置 |
+| 变量 | 说明 | 本地默认 |
+|------|------|----------|
+| `JWT_SECRET` | JWT 签名密钥（≥32 字符） | 见 `application.yml` |
+| `UPLOAD_PATH` | 文件上传目录 | `D:/easy-wiki/uploads/` |
+| `DEEPSEEK_API_KEY` | DeepSeek API 密钥 | 空 |
+| `AGENT_ENABLED` | 是否启用 AI Agent | `false` |
+| `FCM_CREDENTIALS` | Firebase 服务账号 JSON 路径 | — |
 
-Spring Boot 还支持标准数据源环境变量（Docker Compose 已配置）：
+**PowerShell 示例（启用 Agent）：**
 
-| 变量 | 说明 |
-|------|------|
-| `SPRING_DATASOURCE_URL` | JDBC 连接 URL |
-| `SPRING_DATASOURCE_USERNAME` | 数据库用户名 |
-| `SPRING_DATASOURCE_PASSWORD` | 数据库密码 |
-
-## 上传目录说明
-
-- **本地开发**：默认路径为 `D:/easy-wiki/uploads/`，首次启动前须执行 `mkdir D:/easy-wiki/uploads/`（Windows）或设置 `UPLOAD_PATH` 指向已存在的目录。
-- **Docker 部署**：容器内路径为 `/data/uploads`，数据通过命名卷 `upload-data` 持久化，重启容器不会丢失已上传文件。
-- 确保运行用户对上传目录具有读写权限。
-
-## Firebase 推送配置（FCM）
-
-### 服务端
-
-1. 在 [Firebase Console](https://console.firebase.google.com/) 创建项目
-2. 项目设置 → 服务账号 → 生成新的私钥，保存 JSON 文件
-3. 启动后端时设置：`FCM_CREDENTIALS=D:/path/to/service-account.json`
-
-### Android 客户端
-
-1. Firebase Console → 添加 Android 应用，包名 `com.easywiki`
-2. 下载 `google-services.json`，**替换** `easy-wiki-android/app/google-services.json`（当前为占位文件）
-3. 重新构建 APK
-
-## 端到端验收
-
-完整验收清单与 curl 示例见 **[docs/E2E-CHECKLIST.md](docs/E2E-CHECKLIST.md)**。
-
-快速冒烟：
-
-```bash
-cd easy-wiki-server && mvn test          # 预期 43 tests PASS
-mvn package -DskipTests                  # 预期 BUILD SUCCESS
-curl http://localhost:8080/api/v1/health # 后端启动后
+```powershell
+$env:AGENT_ENABLED = "true"
+$env:DEEPSEEK_API_KEY = "sk-your-key"
+cd easy-wiki-server; mvn spring-boot:run
 ```
+
+**FCM 推送：** 服务端设置 `FCM_CREDENTIALS`；Android 替换 `easy-wiki-android/app/google-services.json` 为 Firebase 控制台下载的真实配置。
+
+---
+
+## 文档索引
+
+| 文档 | 路径 |
+|------|------|
+| 产品需求 | `prd/prd-v1.0.md` |
+| 概要设计 | `docs/superpowers/specs/2026-07-06-easy-wiki-design.md` |
+| 实施计划 | `docs/superpowers/plans/2026-07-06-easy-wiki-v1-implementation.md` |
+| 进度总结 | `docs/superpowers/progress/2026-07-07-easy-wiki-v1-progress.md` |
+| E2E 验收清单 | `docs/E2E-CHECKLIST.md` |
+
+---
 
 ## 已知限制
 
-| 项目 | 说明 |
-|------|------|
-| **Docker** | 开发环境未安装 Docker 时，跳过 `docker compose` 验证，使用「本地开发（无 Docker）」流程 |
-| **JDK 版本** | 推荐 JDK 17；若使用 Java 24，Lombok 注解处理器不可用，后端实体/DTO 使用手写 getter/setter |
-| **Firebase** | 占位 `google-services.json` 仅用于编译，真实推送需替换为 Firebase 项目配置 |
-| **Agent** | 默认 `AGENT_ENABLED=false`；启用需设置 `DEEPSEEK_API_KEY` |
-
-## 相关文档
-
-- PRD：`prd/prd-v1.0.md`
-- 概要设计：`docs/superpowers/specs/2026-07-06-easy-wiki-design.md`
-- 实施计划：`docs/superpowers/plans/2026-07-06-easy-wiki-v1-implementation.md`
-- E2E 验收清单：`docs/E2E-CHECKLIST.md`
+- **Docker**：未安装时可跳过，使用上文「本地部署」流程
+- **Firebase**：仓库内 `google-services.json` 为占位，真实推送需自行配置
+- **Agent**：默认关闭，需 `AGENT_ENABLED=true` 及有效 `DEEPSEEK_API_KEY`
