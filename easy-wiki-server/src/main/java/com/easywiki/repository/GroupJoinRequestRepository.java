@@ -3,7 +3,10 @@ package com.easywiki.repository;
 import com.easywiki.entity.GroupJoinRequest;
 import com.easywiki.enums.JoinRequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,4 +17,8 @@ public interface GroupJoinRequestRepository extends JpaRepository<GroupJoinReque
     Optional<GroupJoinRequest> findByGroupIdAndUserIdAndStatus(Long groupId, Long userId, JoinRequestStatus status);
 
     void deleteByGroupId(Long groupId);
+
+    @Query("SELECT r FROM GroupJoinRequest r WHERE r.status = :status AND r.createdAt < :cutoff")
+    List<GroupJoinRequest> findByStatusAndCreatedAtBefore(@Param("status") JoinRequestStatus status,
+                                                          @Param("cutoff") LocalDateTime cutoff);
 }

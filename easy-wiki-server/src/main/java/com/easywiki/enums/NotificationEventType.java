@@ -6,6 +6,8 @@ public enum NotificationEventType {
     JOIN_REJECTED,
     TASK_ASSIGNED,
     TASK_ACCEPTED,
+    TASK_DUE_REMINDER,
+    TASK_ASSIGNMENT_TIMEOUT,
     WIKI_UPDATED,
     CHAT_MENTION
 }
