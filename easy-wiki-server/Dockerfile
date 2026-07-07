@@ -1,11 +1,12 @@
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-RUN apk add --no-cache maven && mvn -q -DskipTests package
+RUN mvn package -DskipTests
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/easy-wiki-server-*.jar app.jar
+RUN mkdir -p /data/uploads
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
