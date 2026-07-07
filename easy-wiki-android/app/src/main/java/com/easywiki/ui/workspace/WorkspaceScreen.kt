@@ -17,17 +17,27 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.easywiki.ui.agent.AgentPlaceholderScreen
-import com.easywiki.ui.chat.ChatPlaceholderScreen
-import com.easywiki.ui.notification.NotificationPlaceholderScreen
+import com.easywiki.data.ws.WebSocketManager
+import com.easywiki.ui.agent.AgentScreen
+import com.easywiki.ui.chat.ChatScreen
+import com.easywiki.ui.notification.NotificationScreen
 import com.easywiki.ui.task.TaskBoardScreen
 import com.easywiki.ui.wiki.WikiTreeScreen
+import com.easywiki.util.DeepLinkDestination
+import com.easywiki.util.WorkspaceTab as NavWorkspaceTab
+import com.easywiki.viewmodel.AgentUiState
+import com.easywiki.viewmodel.AgentViewModel
+import com.easywiki.viewmodel.ChatUiState
+import com.easywiki.viewmodel.ChatViewModel
+import com.easywiki.viewmodel.NotificationUiState
+import com.easywiki.viewmodel.NotificationViewModel
 import com.easywiki.viewmodel.TaskBoardUiState
 import com.easywiki.viewmodel.TaskViewModel
 import com.easywiki.viewmodel.WikiTreeUiState
@@ -41,6 +51,22 @@ enum class WorkspaceTab(val label: String) {
     AGENT("Agent")
 }
 
+fun WorkspaceTab.toNavTab(): NavWorkspaceTab = when (this) {
+    WorkspaceTab.WIKI -> NavWorkspaceTab.WIKI
+    WorkspaceTab.TASKS -> NavWorkspaceTab.TASKS
+    WorkspaceTab.CHAT -> NavWorkspaceTab.CHAT
+    WorkspaceTab.NOTIFICATIONS -> NavWorkspaceTab.NOTIFICATIONS
+    WorkspaceTab.AGENT -> NavWorkspaceTab.AGENT
+}
+
+fun NavWorkspaceTab.toWorkspaceTab(): WorkspaceTab = when (this) {
+    NavWorkspaceTab.WIKI -> WorkspaceTab.WIKI
+    NavWorkspaceTab.TASKS -> WorkspaceTab.TASKS
+    NavWorkspaceTab.CHAT -> WorkspaceTab.CHAT
+    NavWorkspaceTab.NOTIFICATIONS -> WorkspaceTab.NOTIFICATIONS
+    NavWorkspaceTab.AGENT -> WorkspaceTab.AGENT
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkspaceScreen(
@@ -50,12 +76,29 @@ fun WorkspaceScreen(
     wikiTreeState: WikiTreeUiState,
     taskViewModel: TaskViewModel,
     taskBoardState: TaskBoardUiState,
+    chatViewModel: ChatViewModel,
+    chatState: ChatUiState,
+    currentUserId: Long?,
+    notificationViewModel: NotificationViewModel,
+    notificationState: NotificationUiState,
+    agentViewModel: AgentViewModel,
+    agentState: AgentUiState,
+    webSocketManager: WebSocketManager,
+    initialTab: WorkspaceTab? = null,
     onWikiPageClick: (Long) -> Unit,
     onTaskClick: (Long) -> Unit,
+    onNavigateFromNotification: (DeepLinkDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    var selectedTabIndex by rememberSaveable {
+        mutableIntStateOf(initialTab?.ordinal ?: 0)
+    }
     val tabs = WorkspaceTab.entries
+
+    DisposableEffect(Unit) {
+        webSocketManager.connect()
+        onDispose { webSocketManager.disconnect() }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -103,9 +146,28 @@ fun WorkspaceScreen(
                     onRefresh = taskViewModel::loadTasks,
                     onTaskClick = onTaskClick
                 )
-                WorkspaceTab.CHAT -> ChatPlaceholderScreen()
-                WorkspaceTab.NOTIFICATIONS -> NotificationPlaceholderScreen()
-                WorkspaceTab.AGENT -> AgentPlaceholderScreen()
+                WorkspaceTab.CHAT -> ChatScreen(
+                    uiState = chatState,
+                    currentUserId = currentUserId,
+                    onLoad = chatViewModel::loadMessages,
+                    onInputChange = chatViewModel::updateInput,
+                    onSend = chatViewModel::sendMessage
+                )
+                WorkspaceTab.NOTIFICATIONS -> NotificationScreen(
+                    uiState = notificationState,
+                    onLoad = notificationViewModel::loadNotifications,
+                    onNotificationClick = notificationViewModel::markAsReadAndNavigate,
+                    onNavigate = onNavigateFromNotification
+                )
+                WorkspaceTab.AGENT -> AgentScreen(
+                    uiState = agentState,
+                    onInputChange = agentViewModel::updateInput,
+                    onSend = agentViewModel::sendMessage,
+                    onAdoptTasks = { message ->
+                        agentViewModel.adoptTaskSuggestions(message.taskSuggestions)
+                    },
+                    onSnackbarDismiss = agentViewModel::clearSnackbar
+                )
             }
         }
     }

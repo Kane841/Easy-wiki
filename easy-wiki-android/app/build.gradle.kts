@@ -1,6 +1,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    // Replace app/google-services.json with your Firebase project file before release builds.
+    // Download from Firebase Console -> Project Settings -> Your apps -> google-services.json
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -67,6 +70,9 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("io.noties.markwon:core:4.6.2")
+
+    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

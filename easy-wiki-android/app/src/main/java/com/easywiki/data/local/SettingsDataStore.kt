@@ -24,9 +24,15 @@ class SettingsDataStore(context: Context) {
         preferences[JWT_TOKEN_KEY]
     }
 
+    val userId: Flow<Long?> = dataStore.data.map { preferences ->
+        preferences[USER_ID_KEY]?.toLongOrNull()
+    }
+
     suspend fun getServerUrl(): String = serverUrl.first()
 
     suspend fun getJwtToken(): String? = jwtToken.first()
+
+    suspend fun getUserId(): Long? = userId.first()
 
     suspend fun setServerUrl(url: String) {
         dataStore.edit { preferences ->
@@ -44,12 +50,24 @@ class SettingsDataStore(context: Context) {
         }
     }
 
+    suspend fun setUserId(id: Long?) {
+        dataStore.edit { preferences ->
+            if (id == null) {
+                preferences.remove(USER_ID_KEY)
+            } else {
+                preferences[USER_ID_KEY] = id.toString()
+            }
+        }
+    }
+
     suspend fun clearJwtToken() {
         setJwtToken(null)
+        setUserId(null)
     }
 
     companion object {
         private val SERVER_URL_KEY = stringPreferencesKey("server_url")
         private val JWT_TOKEN_KEY = stringPreferencesKey("jwt_token")
+        private val USER_ID_KEY = stringPreferencesKey("user_id")
     }
 }

@@ -18,21 +18,34 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.easywiki.data.local.SettingsDataStore
+import com.easywiki.data.repository.AgentRepository
 import com.easywiki.data.repository.AuthRepository
+import com.easywiki.data.repository.ChatRepository
 import com.easywiki.data.repository.GroupRepository
+import com.easywiki.data.repository.NotificationRepository
 import com.easywiki.data.repository.TaskRepository
 import com.easywiki.data.repository.WikiRepository
+import com.easywiki.data.ws.WebSocketManager
 import com.easywiki.ui.auth.LoginScreen
 import com.easywiki.ui.auth.ServerConfigScreen
 import com.easywiki.ui.group.GroupListScreen
 import com.easywiki.ui.task.TaskDetailScreen
 import com.easywiki.ui.wiki.WikiDetailScreen
 import com.easywiki.ui.workspace.WorkspaceScreen
+import com.easywiki.ui.workspace.WorkspaceTab
+import com.easywiki.ui.workspace.toWorkspaceTab
+import com.easywiki.util.DeepLinkDestination
+import com.easywiki.viewmodel.AgentViewModel
+import com.easywiki.viewmodel.AgentViewModelFactory
 import com.easywiki.viewmodel.AuthUiState
 import com.easywiki.viewmodel.AuthViewModel
 import com.easywiki.viewmodel.AuthViewModelFactory
+import com.easywiki.viewmodel.ChatViewModel
+import com.easywiki.viewmodel.ChatViewModelFactory
 import com.easywiki.viewmodel.GroupViewModel
 import com.easywiki.viewmodel.GroupViewModelFactory
+import com.easywiki.viewmodel.NotificationViewModel
+import com.easywiki.viewmodel.NotificationViewModelFactory
 import com.easywiki.viewmodel.TaskViewModel
 import com.easywiki.viewmodel.TaskViewModelFactory
 import com.easywiki.viewmodel.WikiViewModel
@@ -46,17 +59,25 @@ fun EasyWikiNavGraph(
     groupRepository: GroupRepository,
     wikiRepository: WikiRepository,
     taskRepository: TaskRepository,
+    chatRepository: ChatRepository,
+    notificationRepository: NotificationRepository,
+    agentRepository: AgentRepository,
+    webSocketManager: WebSocketManager,
+    pendingDeepLink: DeepLinkDestination? = null,
+    onDeepLinkConsumed: () -> Unit = {},
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
     val serverUrl by settingsDataStore.serverUrl.collectAsState(initial = "")
     val jwtToken by settingsDataStore.jwtToken.collectAsState(initial = null)
+    val currentUserId by settingsDataStore.userId.collectAsState(initial = null)
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(authRepository))
     val authUiState by authViewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
 
     var isSavingServerUrl by remember { mutableStateOf(false) }
     var serverConfigError by remember { mutableStateOf<String?>(null) }
+    var workspaceInitialTab by remember { mutableStateOf<WorkspaceTab?>(null) }
 
     val startDestination = remember(serverUrl, jwtToken) {
         when {
@@ -71,6 +92,15 @@ fun EasyWikiNavGraph(
             navController.navigate(Routes.GROUP_LIST) {
                 popUpTo(Routes.LOGIN) { inclusive = true }
             }
+        }
+    }
+
+    LaunchedEffect(pendingDeepLink) {
+        pendingDeepLink?.let { destination ->
+            navigateToDeepLink(navController, destination) { tab ->
+                workspaceInitialTab = tab
+            }
+            onDeepLinkConsumed()
         }
     }
 
@@ -149,6 +179,7 @@ fun EasyWikiNavGraph(
                 )
                 val groupUiState by groupViewModel.uiState.collectAsState()
                 val groupName = groupUiState.groups.find { it.id == groupId }?.name
+                val initialTab = workspaceInitialTab.also { workspaceInitialTab = null }
 
                 LaunchedEffect(groupId) {
                     if (groupUiState.groups.isEmpty()) {
@@ -166,6 +197,21 @@ fun EasyWikiNavGraph(
                 )
                 val taskBoardState by taskViewModel.boardState.collectAsState()
 
+                val chatViewModel: ChatViewModel = viewModel(
+                    factory = ChatViewModelFactory(groupId, chatRepository, webSocketManager)
+                )
+                val chatState by chatViewModel.uiState.collectAsState()
+
+                val notificationViewModel: NotificationViewModel = viewModel(
+                    factory = NotificationViewModelFactory(notificationRepository, webSocketManager)
+                )
+                val notificationState by notificationViewModel.uiState.collectAsState()
+
+                val agentViewModel: AgentViewModel = viewModel(
+                    factory = AgentViewModelFactory(groupId, agentRepository)
+                )
+                val agentState by agentViewModel.uiState.collectAsState()
+
                 WorkspaceScreen(
                     groupId = groupId,
                     groupName = groupName,
@@ -173,11 +219,25 @@ fun EasyWikiNavGraph(
                     wikiTreeState = wikiTreeState,
                     taskViewModel = taskViewModel,
                     taskBoardState = taskBoardState,
+                    chatViewModel = chatViewModel,
+                    chatState = chatState,
+                    currentUserId = currentUserId,
+                    notificationViewModel = notificationViewModel,
+                    notificationState = notificationState,
+                    agentViewModel = agentViewModel,
+                    agentState = agentState,
+                    webSocketManager = webSocketManager,
+                    initialTab = initialTab,
                     onWikiPageClick = { pageId ->
                         navController.navigate(Routes.wikiDetail(groupId, pageId))
                     },
                     onTaskClick = { taskId ->
                         navController.navigate(Routes.taskDetail(groupId, taskId))
+                    },
+                    onNavigateFromNotification = { destination ->
+                        navigateToDeepLink(navController, destination) { tab ->
+                            workspaceInitialTab = tab
+                        }
                     }
                 )
             }
@@ -237,6 +297,29 @@ fun EasyWikiNavGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+        }
+    }
+}
+
+private fun navigateToDeepLink(
+    navController: NavHostController,
+    destination: DeepLinkDestination,
+    onWorkspaceTab: (WorkspaceTab) -> Unit
+) {
+    when (destination) {
+        is DeepLinkDestination.WikiPage -> {
+            navController.navigate(Routes.wikiDetail(destination.groupId, destination.pageId))
+        }
+        is DeepLinkDestination.Task -> {
+            navController.navigate(Routes.taskDetail(destination.groupId, destination.taskId))
+        }
+        is DeepLinkDestination.Chat -> {
+            onWorkspaceTab(WorkspaceTab.CHAT)
+            navController.navigate(Routes.workspace(destination.groupId))
+        }
+        is DeepLinkDestination.Workspace -> {
+            destination.tab?.toWorkspaceTab()?.let(onWorkspaceTab)
+            navController.navigate(Routes.workspace(destination.groupId))
         }
     }
 }

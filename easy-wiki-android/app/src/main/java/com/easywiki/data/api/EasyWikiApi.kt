@@ -1,13 +1,20 @@
 package com.easywiki.data.api
 
+import com.easywiki.model.AgentChatRequest
+import com.easywiki.model.AgentChatResponse
+import com.easywiki.model.AgentTaskCreateRequest
 import com.easywiki.model.ApiResponse
 import com.easywiki.model.AssignTaskRequest
 import com.easywiki.model.AuthResponse
+import com.easywiki.model.ChatMessage
 import com.easywiki.model.CreateGroupRequest
 import com.easywiki.model.CreateTaskRequest
 import com.easywiki.model.CreateWikiPageRequest
 import com.easywiki.model.Group
 import com.easywiki.model.LoginRequest
+import com.easywiki.model.NotificationItem
+import com.easywiki.model.PagedResponse
+import com.easywiki.model.RegisterDeviceRequest
 import com.easywiki.model.RegisterRequest
 import com.easywiki.model.Task
 import com.easywiki.model.TaskStatus
@@ -120,4 +127,36 @@ interface EasyWikiApi {
         @Path("groupId") groupId: Long,
         @Path("taskId") taskId: Long
     ): ApiResponse<Task>
+
+    // Chat
+    @GET("api/v1/groups/{groupId}/chat/messages")
+    suspend fun listChatMessages(
+        @Path("groupId") groupId: Long,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 50
+    ): ApiResponse<PagedResponse<ChatMessage>>
+
+    // Notifications
+    @GET("api/v1/notifications")
+    suspend fun listNotifications(): ApiResponse<List<NotificationItem>>
+
+    @PUT("api/v1/notifications/{id}/read")
+    suspend fun markNotificationRead(@Path("id") id: Long): ApiResponse<NotificationItem>
+
+    // Devices (FCM)
+    @POST("api/v1/devices")
+    suspend fun registerDevice(@Body request: RegisterDeviceRequest): ApiResponse<Unit?>
+
+    // Agent
+    @POST("api/v1/groups/{groupId}/agent/chat")
+    suspend fun agentChat(
+        @Path("groupId") groupId: Long,
+        @Body request: AgentChatRequest
+    ): ApiResponse<AgentChatResponse>
+
+    @POST("api/v1/groups/{groupId}/agent/tasks/create")
+    suspend fun agentCreateTasks(
+        @Path("groupId") groupId: Long,
+        @Body request: AgentTaskCreateRequest
+    ): ApiResponse<List<Task>>
 }

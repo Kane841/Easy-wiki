@@ -22,6 +22,7 @@ class AuthRepository(
                 throw IllegalStateException(response.message.ifBlank { "登录失败" })
             }
             settingsDataStore.setJwtToken(response.data.token)
+            settingsDataStore.setUserId(response.data.userId)
             response.data
         }
     }
