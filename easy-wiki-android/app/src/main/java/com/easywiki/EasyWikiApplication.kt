@@ -3,6 +3,9 @@ package com.easywiki
 import android.app.Application
 import com.easywiki.data.local.SettingsDataStore
 import com.easywiki.data.repository.AuthRepository
+import com.easywiki.data.repository.GroupRepository
+import com.easywiki.data.repository.TaskRepository
+import com.easywiki.data.repository.WikiRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,6 +22,15 @@ class EasyWikiApplication : Application() {
     lateinit var authRepository: AuthRepository
         private set
 
+    lateinit var groupRepository: GroupRepository
+        private set
+
+    lateinit var wikiRepository: WikiRepository
+        private set
+
+    lateinit var taskRepository: TaskRepository
+        private set
+
     private var cachedToken: String? = null
 
     override fun onCreate() {
@@ -29,9 +41,23 @@ class EasyWikiApplication : Application() {
             .onEach { cachedToken = it }
             .launchIn(applicationScope)
 
+        val tokenProvider = { cachedToken }
+
         authRepository = AuthRepository(
             settingsDataStore = settingsDataStore,
-            tokenProvider = { cachedToken }
+            tokenProvider = tokenProvider
+        )
+        groupRepository = GroupRepository(
+            settingsDataStore = settingsDataStore,
+            tokenProvider = tokenProvider
+        )
+        wikiRepository = WikiRepository(
+            settingsDataStore = settingsDataStore,
+            tokenProvider = tokenProvider
+        )
+        taskRepository = TaskRepository(
+            settingsDataStore = settingsDataStore,
+            tokenProvider = tokenProvider
         )
     }
 }

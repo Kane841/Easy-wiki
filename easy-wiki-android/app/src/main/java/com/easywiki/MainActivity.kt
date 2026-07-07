@@ -24,7 +24,10 @@ class MainActivity : ComponentActivity() {
                 ) {
                     EasyWikiNavGraph(
                         settingsDataStore = app.settingsDataStore,
-                        authRepository = app.authRepository
+                        authRepository = app.authRepository,
+                        groupRepository = app.groupRepository,
+                        wikiRepository = app.wikiRepository,
+                        taskRepository = app.taskRepository
                     )
                 }
             }
