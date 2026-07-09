@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: easy-wiki-server
+  datasource:
+    url: jdbc:mysql://localhost:3306/easywiki?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: easywiki
+    password: easywiki
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+easywiki:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-in-production-min-32-chars!!}
+    expiration-ms: 604800000
+  upload:
+    path: ${UPLOAD_PATH:D:/easy-wiki/uploads/}
+  agent:
+    enabled: ${AGENT_ENABLED:false}
+    api-base-url: https://api.deepseek.com
+    api-key: ${DEEPSEEK_API_KEY:}
+    model: deepseek-chat
+    max-tokens: 8192
+    timeout-seconds: 30

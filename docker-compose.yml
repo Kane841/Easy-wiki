@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: easywiki
+      MYSQL_USER: easywiki
+      MYSQL_PASSWORD: easywiki
+    ports: ["3307:3306"]
+    volumes: [mysql-data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  app:
+    build: ./easy-wiki-server
+    ports: ["8080:8080"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/easywiki?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: easywiki
+      SPRING_DATASOURCE_PASSWORD: easywiki
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production-min-32-chars!!}
+      UPLOAD_PATH: /data/uploads
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      AGENT_ENABLED: ${AGENT_ENABLED:-false}
+    volumes: [upload-data:/data/uploads]
+    depends_on:
+      mysql: { condition: service_healthy }
+volumes:
+  mysql-data:
+  upload-data:
