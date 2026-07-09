@@ -105,6 +105,9 @@ public class TaskService {
     public Task updateStatus(Long groupId, Long userId, Long taskId, TaskStatus newStatus) {
         membershipService.requireMember(groupId, userId);
         Task task = findTaskInGroup(groupId, taskId);
+        if (newStatus == TaskStatus.DONE && !userId.equals(task.getAssigneeId())) {
+            throw new BusinessException(403, "仅负责人可完成任务");
+        }
         TaskStatus oldStatus = task.getStatus();
         task.setStatus(newStatus);
         task = taskRepository.save(task);
@@ -218,6 +221,28 @@ public class TaskService {
         task.setAssignmentStatus(AssignmentStatus.PENDING_ACCEPT);
         task = taskRepository.save(task);
         logAssignmentChange(task, operatorId, "TRANSFER", old, AssignmentStatus.PENDING_ACCEPT);
+        return task;
+    }
+
+    @Transactional
+    public Task giveUp(Long groupId, Long userId, Long taskId) {
+        membershipService.requireMember(groupId, userId);
+        Task task = findTaskInGroup(groupId, taskId);
+        if (task.getStatus() != TaskStatus.IN_PROGRESS) {
+            throw new BusinessException(400, "仅进行中的任务可放弃");
+        }
+        if (!userId.equals(task.getAssigneeId())) {
+            throw new BusinessException(403, "仅负责人可放弃任务");
+        }
+
+        AssignmentStatus oldAssignment = task.getAssignmentStatus();
+        TaskStatus oldStatus = task.getStatus();
+        task.setAssigneeId(null);
+        task.setAssignmentStatus(AssignmentStatus.UNASSIGNED);
+        task.setStatus(TaskStatus.TODO);
+        task = taskRepository.save(task);
+        logAssignmentChange(task, userId, "GIVE_UP", oldAssignment, AssignmentStatus.UNASSIGNED);
+        logStatusChange(task, userId, "GIVE_UP", oldStatus, TaskStatus.TODO);
         return task;
     }
 

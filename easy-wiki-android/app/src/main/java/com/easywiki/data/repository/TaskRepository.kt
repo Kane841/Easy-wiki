@@ -82,6 +82,14 @@ class TaskRepository(
         response.data
     }
 
+    suspend fun giveUpTask(groupId: Long, taskId: Long): Result<Task> = runCatching {
+        val response = api().giveUpTask(groupId, taskId)
+        if (response.code != 0 || response.data == null) {
+            throw IllegalStateException(response.message.ifBlank { "放弃任务失败" })
+        }
+        response.data
+    }
+
     suspend fun updateTaskStatus(groupId: Long, taskId: Long, task: Task, status: TaskStatus): Result<Task> =
         runCatching {
             val response = api().updateTask(

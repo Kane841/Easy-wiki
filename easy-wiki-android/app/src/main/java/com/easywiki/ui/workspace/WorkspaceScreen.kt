@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
@@ -35,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -109,6 +111,7 @@ fun WorkspaceScreen(
     onShowInviteDialog: () -> Unit,
     onHideInviteDialog: () -> Unit,
     onGenerateInviteToken: (Long) -> Unit,
+    onNavigateBack: () -> Unit,
     initialTab: WorkspaceTab? = null,
     onWikiPageClick: (Long) -> Unit,
     onTaskClick: (Long) -> Unit,
@@ -118,6 +121,11 @@ fun WorkspaceScreen(
     var selectedTabIndex by rememberSaveable {
         mutableIntStateOf(initialTab?.ordinal ?: 0)
     }
+
+    LaunchedEffect(initialTab) {
+        initialTab?.let { selectedTabIndex = it.ordinal }
+    }
+
     val tabs = WorkspaceTab.entries
 
     DisposableEffect(Unit) {
@@ -130,6 +138,14 @@ fun WorkspaceScreen(
         topBar = {
             TopAppBar(
                 title = { Text(groupName ?: "工作区") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
+                        )
+                    }
+                },
                 actions = {
                     IconButton(onClick = onShowInviteDialog) {
                         Icon(

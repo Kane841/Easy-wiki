@@ -37,6 +37,8 @@ import com.easywiki.viewmodel.TaskDetailUiState
 import com.easywiki.viewmodel.canAccept
 import com.easywiki.viewmodel.canAssign
 import com.easywiki.viewmodel.canClaim
+import com.easywiki.viewmodel.canComplete
+import com.easywiki.viewmodel.canGiveUp
 import com.easywiki.viewmodel.canReject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,12 +46,15 @@ import com.easywiki.viewmodel.canReject
 fun TaskDetailScreen(
     taskId: Long,
     uiState: TaskDetailUiState,
+    currentUserId: Long?,
     onLoad: (Long) -> Unit,
     onAssigneeIdChange: (String) -> Unit,
     onAssign: (Long) -> Unit,
     onAccept: (Long) -> Unit,
     onReject: (Long) -> Unit,
     onClaim: (Long) -> Unit,
+    onComplete: (Long) -> Unit,
+    onGiveUp: (Long) -> Unit,
     onSnackbarDismiss: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -161,7 +166,7 @@ fun TaskDetailScreen(
                         }
                     }
 
-                    if (task.canAccept()) {
+                    if (task.canAccept(currentUserId)) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
                             onClick = { onAccept(taskId) },
@@ -172,7 +177,7 @@ fun TaskDetailScreen(
                         }
                     }
 
-                    if (task.canReject()) {
+                    if (task.canReject(currentUserId)) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
                             onClick = { onReject(taskId) },
@@ -180,6 +185,28 @@ fun TaskDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("拒绝任务")
+                        }
+                    }
+
+                    if (task.canComplete(currentUserId)) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { onComplete(taskId) },
+                            enabled = !uiState.isActionLoading,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("完成任务")
+                        }
+                    }
+
+                    if (task.canGiveUp(currentUserId)) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { onGiveUp(taskId) },
+                            enabled = !uiState.isActionLoading,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("放弃任务")
                         }
                     }
 

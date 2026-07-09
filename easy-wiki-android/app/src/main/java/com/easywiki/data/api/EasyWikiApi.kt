@@ -132,6 +132,12 @@ interface EasyWikiApi {
         @Path("taskId") taskId: Long
     ): ApiResponse<Task>
 
+    @POST("api/v1/groups/{groupId}/tasks/{taskId}/give-up")
+    suspend fun giveUpTask(
+        @Path("groupId") groupId: Long,
+        @Path("taskId") taskId: Long
+    ): ApiResponse<Task>
+
     // Chat
     @GET("api/v1/groups/{groupId}/chat/messages")
     suspend fun listChatMessages(

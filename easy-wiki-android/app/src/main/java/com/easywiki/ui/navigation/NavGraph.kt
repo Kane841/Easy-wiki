@@ -239,6 +239,7 @@ fun EasyWikiNavGraph(
                     onShowInviteDialog = groupViewModel::showInviteDialog,
                     onHideInviteDialog = groupViewModel::hideInviteDialog,
                     onGenerateInviteToken = groupViewModel::generateInviteToken,
+                    onNavigateBack = { navController.popBackStack() },
                     initialTab = initialTab,
                     onWikiPageClick = { pageId ->
                         navController.navigate(Routes.wikiDetail(groupId, pageId))
@@ -291,7 +292,9 @@ fun EasyWikiNavGraph(
             ) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getLong("groupId") ?: return@composable
                 val taskId = backStackEntry.arguments?.getLong("taskId") ?: return@composable
+                val workspaceEntry = navController.getBackStackEntry(Routes.WORKSPACE)
                 val taskViewModel: TaskViewModel = viewModel(
+                    viewModelStoreOwner = workspaceEntry,
                     factory = TaskViewModelFactory(groupId, taskRepository)
                 )
                 val detailState by taskViewModel.detailState.collectAsState()
@@ -299,12 +302,15 @@ fun EasyWikiNavGraph(
                 TaskDetailScreen(
                     taskId = taskId,
                     uiState = detailState,
+                    currentUserId = currentUserId,
                     onLoad = taskViewModel::loadTask,
                     onAssigneeIdChange = taskViewModel::updateAssigneeIdInput,
                     onAssign = taskViewModel::assignTask,
                     onAccept = taskViewModel::acceptTask,
                     onReject = taskViewModel::rejectTask,
                     onClaim = taskViewModel::claimTask,
+                    onComplete = taskViewModel::completeTask,
+                    onGiveUp = taskViewModel::giveUpTask,
                     onSnackbarDismiss = taskViewModel::clearSnackbar,
                     onNavigateBack = { navController.popBackStack() }
                 )

@@ -139,6 +139,15 @@ class TaskViewModel(
         performAction(taskId) { taskRepository.claimTask(groupId, taskId) }
     }
 
+    fun completeTask(taskId: Long) {
+        val task = _detailState.value.task ?: return
+        performAction(taskId) { taskRepository.updateTaskStatus(groupId, taskId, task, TaskStatus.DONE) }
+    }
+
+    fun giveUpTask(taskId: Long) {
+        performAction(taskId) { taskRepository.giveUpTask(groupId, taskId) }
+    }
+
     fun clearSnackbar() {
         _detailState.update { it.copy(snackbarMessage = null) }
     }
@@ -184,9 +193,17 @@ class TaskViewModelFactory(
 fun Task.canClaim(): Boolean =
     assignmentStatus == AssignmentStatus.UNASSIGNED || assigneeId == null
 
-fun Task.canAccept(): Boolean = assignmentStatus == AssignmentStatus.PENDING_ACCEPT
+fun Task.canAccept(currentUserId: Long?): Boolean =
+    assignmentStatus == AssignmentStatus.PENDING_ACCEPT && currentUserId != null && currentUserId == assigneeId
 
-fun Task.canReject(): Boolean = assignmentStatus == AssignmentStatus.PENDING_ACCEPT
+fun Task.canReject(currentUserId: Long?): Boolean =
+    assignmentStatus == AssignmentStatus.PENDING_ACCEPT && currentUserId != null && currentUserId == assigneeId
 
 fun Task.canAssign(): Boolean =
     assignmentStatus == AssignmentStatus.UNASSIGNED || assignmentStatus == null
+
+fun Task.canComplete(currentUserId: Long?): Boolean =
+    status == TaskStatus.IN_PROGRESS && assignmentStatus == AssignmentStatus.ACCEPTED && currentUserId != null && currentUserId == assigneeId
+
+fun Task.canGiveUp(currentUserId: Long?): Boolean =
+    status == TaskStatus.IN_PROGRESS && assignmentStatus == AssignmentStatus.ACCEPTED && currentUserId != null && currentUserId == assigneeId

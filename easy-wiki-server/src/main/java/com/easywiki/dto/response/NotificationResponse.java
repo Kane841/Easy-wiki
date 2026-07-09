@@ -13,6 +13,7 @@ public class NotificationResponse {
     private String title;
     private String body;
     private String data;
+    private String targetUrl;
     private boolean read;
     private LocalDateTime createdAt;
 
@@ -27,6 +28,7 @@ public class NotificationResponse {
         resp.setTitle(notification.getTitle());
         resp.setBody(notification.getBody());
         resp.setData(notification.getData());
+        resp.setTargetUrl(notification.getTargetUrl());
         resp.setRead(notification.isRead());
         resp.setCreatedAt(notification.getCreatedAt());
         return resp;
@@ -78,6 +80,14 @@ public class NotificationResponse {
 
     public void setData(String data) {
         this.data = data;
+    }
+
+    public String getTargetUrl() {
+        return targetUrl;
+    }
+
+    public void setTargetUrl(String targetUrl) {
+        this.targetUrl = targetUrl;
     }
 
     public boolean isRead() {

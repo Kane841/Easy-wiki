@@ -7,6 +7,7 @@ object NotificationNavigation {
 
     fun resolveDestination(notification: NotificationItem, targetUrl: String? = null): DeepLinkDestination? {
         DeepLinkParser.parse(targetUrl)?.let { return it }
+        DeepLinkParser.parse(notification.targetUrl)?.let { return it }
         notification.data?.let { data ->
             DeepLinkParser.parse(data)?.let { return it }
             try {

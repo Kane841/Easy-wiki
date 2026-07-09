@@ -22,8 +22,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: easywiki
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production-min-32-chars!!}
       UPLOAD_PATH: /data/uploads
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      AGENT_ENABLED: ${AGENT_ENABLED:-false}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-sk-97a39ba30c134051982ad6f2d0771106}
+      AGENT_ENABLED: ${AGENT_ENABLED:-true}
     volumes: [upload-data:/data/uploads]
     depends_on:
       mysql: { condition: service_healthy }

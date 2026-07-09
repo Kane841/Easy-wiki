@@ -40,6 +40,9 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     private String data;
 
+    @Column(name = "target_url", length = 500)
+    private String targetUrl;
+
     @Column(name = "is_read", nullable = false)
     private boolean read;
 
@@ -110,6 +113,14 @@ public class Notification {
 
     public void setData(String data) {
         this.data = data;
+    }
+
+    public String getTargetUrl() {
+        return targetUrl;
+    }
+
+    public void setTargetUrl(String targetUrl) {
+        this.targetUrl = targetUrl;
     }
 
     public boolean isRead() {

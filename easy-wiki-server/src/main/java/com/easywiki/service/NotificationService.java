@@ -41,6 +41,7 @@ public class NotificationService {
         notification.setTitle(event.getTitle());
         notification.setBody(event.getBody());
         notification.setData(event.getData());
+        notification.setTargetUrl(event.getTargetUrl());
         notification.setRead(false);
         notification = notificationRepository.save(notification);
 

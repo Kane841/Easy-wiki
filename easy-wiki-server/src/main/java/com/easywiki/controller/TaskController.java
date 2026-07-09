@@ -115,6 +115,14 @@ public class TaskController {
         return ApiResponse.ok(TaskResponse.from(task));
     }
 
+    @PostMapping("/{taskId}/give-up")
+    public ApiResponse<TaskResponse> giveUp(@PathVariable Long groupId,
+                                            @PathVariable Long taskId) {
+        Long userId = currentUserId();
+        var task = taskService.giveUp(groupId, userId, taskId);
+        return ApiResponse.ok(TaskResponse.from(task));
+    }
+
     private Long currentUserId() {
         UserPrincipal principal = (UserPrincipal) SecurityContextHolder.getContext()
                 .getAuthentication()

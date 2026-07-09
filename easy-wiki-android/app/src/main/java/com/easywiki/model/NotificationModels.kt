@@ -19,6 +19,7 @@ data class NotificationItem(
     val title: String,
     val body: String,
     val data: String?,
+    val targetUrl: String?,
     val read: Boolean,
     val createdAt: String?
 )
