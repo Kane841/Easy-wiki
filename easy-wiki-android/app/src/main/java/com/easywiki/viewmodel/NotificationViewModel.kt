@@ -29,6 +29,7 @@ class NotificationViewModel(
     val uiState: StateFlow<NotificationUiState> = _uiState.asStateFlow()
 
     init {
+        loadNotifications()
         viewModelScope.launch {
             webSocketManager.notifications.collect {
                 loadNotifications()

@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -82,40 +83,49 @@ private fun NotificationRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = if (notification.read) {
-                MaterialTheme.colorScheme.surface
-            } else {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = notification.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = if (notification.read) FontWeight.Normal else FontWeight.Bold
-            )
-            Text(
-                text = notification.body,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            notification.createdAt?.let { time ->
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = time,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = notification.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (notification.read) FontWeight.Normal else FontWeight.Bold
+                )
+                Text(
+                    text = notification.body,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 4.dp)
                 )
+                notification.createdAt?.let { time ->
+                    Text(
+                        text = time,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
+        }
+        if (!notification.read) {
+            Badge(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 8.dp, end = 8.dp),
+                containerColor = MaterialTheme.colorScheme.error
+            )
         }
     }
 }
