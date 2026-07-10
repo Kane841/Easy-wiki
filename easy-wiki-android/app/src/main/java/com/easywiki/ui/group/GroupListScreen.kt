@@ -17,9 +17,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GroupAdd
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -33,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,19 +57,53 @@ fun GroupListScreen(
     onHideCreateDialog: () -> Unit,
     onShowJoinDialog: () -> Unit,
     onHideJoinDialog: () -> Unit,
+    onProfileClick: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text("我的群组") },
                 actions = {
-                    IconButton(onClick = onLogout) {
+                    IconButton(onClick = { showMenu = true }) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "退出登录"
+                            Icons.Default.MoreVert,
+                            contentDescription = "更多选项"
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("个人信息") },
+                            onClick = {
+                                showMenu = false
+                                onProfileClick()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("退出登录") },
+                            onClick = {
+                                showMenu = false
+                                onLogout()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ExitToApp,
+                                    contentDescription = null
+                                )
+                            }
                         )
                     }
                 }

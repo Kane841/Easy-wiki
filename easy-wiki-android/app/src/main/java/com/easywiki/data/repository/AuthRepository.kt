@@ -6,6 +6,7 @@ import com.easywiki.data.local.SettingsDataStore
 import com.easywiki.model.AuthResponse
 import com.easywiki.model.LoginRequest
 import com.easywiki.model.RegisterRequest
+import com.easywiki.model.UserProfile
 
 class AuthRepository(
     private val settingsDataStore: SettingsDataStore,
@@ -38,6 +39,16 @@ class AuthRepository(
 
     suspend fun logout() {
         settingsDataStore.clearJwtToken()
+    }
+
+    suspend fun getMyProfile(): Result<UserProfile> {
+        return runCatching {
+            val response = api().getMyProfile()
+            if (response.code != 0 || response.data == null) {
+                throw IllegalStateException(response.message.ifBlank { "获取用户信息失败" })
+            }
+            response.data
+        }
     }
 
     suspend fun checkHealth(serverUrl: String): Result<Unit> {

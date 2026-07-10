@@ -21,6 +21,7 @@ import com.easywiki.model.Task
 import com.easywiki.model.TaskStatus
 import com.easywiki.model.UpdateTaskRequest
 import com.easywiki.model.UpdateWikiPageRequest
+import com.easywiki.model.UserProfile
 import com.easywiki.model.WikiPage
 import com.easywiki.model.WikiTreeNode
 import retrofit2.http.Body
@@ -41,6 +42,9 @@ interface EasyWikiApi {
 
     @GET("api/v1/health")
     suspend fun health(): ApiResponse<Map<String, String>>
+
+    @GET("api/v1/users/me")
+    suspend fun getMyProfile(): ApiResponse<UserProfile>
 
     // Groups
     @GET("api/v1/groups")

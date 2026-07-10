@@ -29,6 +29,7 @@ import com.easywiki.data.ws.WebSocketManager
 import com.easywiki.ui.auth.LoginScreen
 import com.easywiki.ui.auth.ServerConfigScreen
 import com.easywiki.ui.group.GroupListScreen
+import com.easywiki.ui.profile.ProfileScreen
 import com.easywiki.ui.task.TaskDetailScreen
 import com.easywiki.ui.wiki.WikiDetailScreen
 import com.easywiki.ui.workspace.WorkspaceScreen
@@ -46,6 +47,8 @@ import com.easywiki.viewmodel.GroupViewModel
 import com.easywiki.viewmodel.GroupViewModelFactory
 import com.easywiki.viewmodel.NotificationViewModel
 import com.easywiki.viewmodel.NotificationViewModelFactory
+import com.easywiki.viewmodel.ProfileViewModel
+import com.easywiki.viewmodel.ProfileViewModelFactory
 import com.easywiki.viewmodel.TaskViewModel
 import com.easywiki.viewmodel.TaskViewModelFactory
 import com.easywiki.viewmodel.WikiViewModel
@@ -166,6 +169,9 @@ fun EasyWikiNavGraph(
                     onHideCreateDialog = groupViewModel::hideCreateDialog,
                     onShowJoinDialog = groupViewModel::showJoinDialog,
                     onHideJoinDialog = groupViewModel::hideJoinDialog,
+                    onProfileClick = {
+                        navController.navigate(Routes.PROFILE)
+                    },
                     onLogout = {
                         webSocketManager.disconnect()
                         authViewModel.logout()
@@ -174,6 +180,32 @@ fun EasyWikiNavGraph(
                             launchSingleTop = true
                         }
                     }
+                )
+            }
+
+            composable(Routes.PROFILE) {
+                val profileViewModel: ProfileViewModel = viewModel(
+                    factory = ProfileViewModelFactory(authRepository)
+                )
+                val profileUiState by profileViewModel.uiState.collectAsState()
+
+                ProfileScreen(
+                    uiState = profileUiState,
+                    onLoad = profileViewModel::loadProfile,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Routes.PROFILE) {
+                val profileViewModel: ProfileViewModel = viewModel(
+                    factory = ProfileViewModelFactory(authRepository)
+                )
+                val profileUiState by profileViewModel.uiState.collectAsState()
+
+                ProfileScreen(
+                    uiState = profileUiState,
+                    onLoad = profileViewModel::loadProfile,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
