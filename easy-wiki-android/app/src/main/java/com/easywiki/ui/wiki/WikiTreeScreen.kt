@@ -14,8 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.easywiki.ui.common.EmptyState
+import com.easywiki.ui.common.ShimmerListSkeleton
 import com.easywiki.viewmodel.WikiTreeUiState
 
 @Composable
@@ -55,17 +57,18 @@ fun WikiTreeScreen(
     Box(modifier = modifier.fillMaxSize()) {
         when {
             uiState.isLoading && uiState.flatNodes.isEmpty() -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                ShimmerListSkeleton(itemCount = 5, lineCount = 1)
             }
             uiState.flatNodes.isEmpty() -> {
-                Text(
-                    text = "暂无 Wiki 页面",
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.bodyLarge
+                EmptyState(
+                    icon = Icons.Default.MenuBook,
+                    title = "暂无 Wiki 页面",
+                    subtitle = "点击右下角 + 创建第一个页面"
                 )
             }
             else -> {
                 LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {

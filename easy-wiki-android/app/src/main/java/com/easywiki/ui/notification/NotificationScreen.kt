@@ -8,9 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.easywiki.model.NotificationItem
+import com.easywiki.ui.common.EmptyState
+import com.easywiki.ui.common.ShimmerListSkeleton
 import com.easywiki.util.DeepLinkDestination
 import com.easywiki.viewmodel.NotificationUiState
 
@@ -40,13 +43,13 @@ fun NotificationScreen(
     Box(modifier = modifier.fillMaxSize()) {
         when {
             uiState.isLoading && uiState.notifications.isEmpty() -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                ShimmerListSkeleton(itemCount = 6, lineCount = 3)
             }
             uiState.notifications.isEmpty() -> {
-                Text(
-                    text = "暂无通知",
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                EmptyState(
+                    icon = Icons.Default.NotificationsOff,
+                    title = "暂无通知",
+                    subtitle = "当有新消息时，会在这里显示"
                 )
             }
             else -> {
@@ -90,7 +93,9 @@ private fun NotificationRow(
             } else {
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
             }
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(

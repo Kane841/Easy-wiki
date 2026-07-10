@@ -15,7 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.easywiki.model.ChatMessage
+import com.easywiki.ui.common.EmptyState
+import com.easywiki.ui.common.ShimmerListSkeleton
 import com.easywiki.viewmodel.ChatUiState
 
 @Composable
@@ -61,13 +63,13 @@ fun ChatScreen(
         Box(modifier = Modifier.weight(1f)) {
             when {
                 uiState.isLoading && uiState.messages.isEmpty() -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    ShimmerListSkeleton(itemCount = 4, lineCount = 2)
                 }
                 uiState.messages.isEmpty() -> {
-                    Text(
-                        text = "暂无消息，发送第一条吧",
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    EmptyState(
+                        icon = Icons.Default.Chat,
+                        title = "暂无消息",
+                        subtitle = "发送第一条消息开始交流"
                     )
                 }
                 else -> {

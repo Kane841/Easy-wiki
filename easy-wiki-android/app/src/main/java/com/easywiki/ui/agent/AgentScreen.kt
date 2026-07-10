@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.easywiki.model.AgentIntent
+import com.easywiki.ui.common.EmptyState
 import com.easywiki.ui.wiki.MarkdownContent
 import com.easywiki.viewmodel.AgentMessage
 import com.easywiki.viewmodel.AgentUiState
@@ -68,18 +70,12 @@ fun AgentScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (uiState.messages.isEmpty() && !uiState.isLoading) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "向 Agent 提问，可整理任务、摘要 Wiki 或生成任务建议",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(24.dp)
-                    )
-                }
+                EmptyState(
+                    icon = Icons.Default.AutoAwesome,
+                    title = "AI 助手",
+                    subtitle = "向 Agent 提问，可整理任务、摘要 Wiki 或生成任务建议",
+                    modifier = Modifier.weight(1f)
+                )
             } else {
                 LazyColumn(
                     state = listState,

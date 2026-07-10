@@ -18,9 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import com.easywiki.model.AssignmentStatus
 import com.easywiki.model.Task
 import com.easywiki.model.TaskStatus
+import com.easywiki.ui.common.EmptyState
+import com.easywiki.ui.common.ShimmerListSkeleton
 import com.easywiki.viewmodel.MyTasksUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,13 +98,14 @@ fun MyTasksScreen(
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     uiState.isLoading && tasks.isEmpty() -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        ShimmerListSkeleton(itemCount = 4, lineCount = 3)
                     }
                     tasks.isEmpty() -> {
-                        Text(
-                            text = if (uiState.selectedTab == 0) "暂无进行中的任务" else "暂无已完成的任务",
-                            modifier = Modifier.align(Alignment.Center),
-                            style = MaterialTheme.typography.bodyLarge
+                        EmptyState(
+                            icon = Icons.Default.TaskAlt,
+                            title = if (uiState.selectedTab == 0) "暂无进行中的任务" else "暂无已完成的任务",
+                            subtitle = "任务会在这里显示",
+                            modifier = Modifier.align(Alignment.Center)
                         )
                     }
                     else -> {

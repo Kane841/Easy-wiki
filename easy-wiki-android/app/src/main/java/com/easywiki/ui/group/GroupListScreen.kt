@@ -16,13 +16,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +46,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.easywiki.model.Group
+import com.easywiki.ui.common.EmptyState
+import com.easywiki.ui.common.ShimmerListSkeleton
 import com.easywiki.viewmodel.GroupUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -142,13 +145,13 @@ fun GroupListScreen(
         ) {
             when {
                 uiState.isLoading && uiState.groups.isEmpty() -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    ShimmerListSkeleton(itemCount = 3, lineCount = 2, itemSpacing = 8.dp)
                 }
                 uiState.groups.isEmpty() -> {
-                    Text(
-                        text = "暂无群组，创建或加入一个吧",
-                        modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge
+                    EmptyState(
+                        icon = Icons.Default.Groups,
+                        title = "暂无群组",
+                        subtitle = "创建或加入一个群组开始协作"
                     )
                 }
                 else -> {
@@ -201,7 +204,9 @@ private fun GroupItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = group.name, style = MaterialTheme.typography.titleMedium)

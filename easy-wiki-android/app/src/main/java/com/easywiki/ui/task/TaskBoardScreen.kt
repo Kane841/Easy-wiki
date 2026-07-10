@@ -19,10 +19,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -53,6 +53,8 @@ import com.easywiki.ui.theme.priorityLow
 import com.easywiki.ui.theme.priorityMedium
 import com.easywiki.ui.theme.priorityNone
 import com.easywiki.ui.theme.priorityUrgent
+import com.easywiki.ui.common.EmptyState
+import com.easywiki.ui.common.ShimmerListSkeleton
 import com.easywiki.viewmodel.TaskBoardUiState
 import com.easywiki.viewmodel.TaskViewModel
 
@@ -111,13 +113,14 @@ fun TaskBoardScreen(
                 val tasks = taskViewModel.tasksForTab(uiState.selectedTab)
                 when {
                     uiState.isLoading && uiState.allTasks.isEmpty() -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        ShimmerListSkeleton(itemCount = 4, lineCount = 3)
                     }
                     tasks.isEmpty() -> {
-                        Text(
-                            text = "暂无任务",
-                            modifier = Modifier.align(Alignment.Center),
-                            style = MaterialTheme.typography.bodyLarge
+                        EmptyState(
+                            icon = Icons.Default.TaskAlt,
+                            title = "暂无任务",
+                            subtitle = "点击右下角 + 创建新任务",
+                            modifier = Modifier.align(Alignment.Center)
                         )
                     }
                     else -> {
