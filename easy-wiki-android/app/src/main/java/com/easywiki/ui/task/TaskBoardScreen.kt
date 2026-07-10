@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.easywiki.model.AssignmentStatus
 import com.easywiki.model.Task
 import com.easywiki.model.TaskPriority
 import com.easywiki.model.TaskStatus
@@ -175,6 +176,32 @@ private fun TaskCard(
                     )
                 }
             }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                if (task.status == TaskStatus.DONE) {
+                    task.assigneeId?.let { id ->
+                        Text(
+                            text = "负责人: #$id",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    val (statusLabel, statusColor) = assignmentStatusInfo(task.assignmentStatus)
+                    Text(
+                        text = statusLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor
+                    )
+                    task.assigneeId?.let { id ->
+                        Text(
+                            text = "负责人: #$id",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -186,6 +213,13 @@ fun priorityColor(priority: TaskPriority?): Color = when (priority) {
     TaskPriority.MEDIUM -> Color(0xFF1E88E5)
     TaskPriority.LOW -> Color(0xFF78909C)
     null -> Color(0xFFBDBDBD)
+}
+
+private fun assignmentStatusInfo(status: AssignmentStatus?): Pair<String, Color> = when (status) {
+    AssignmentStatus.UNASSIGNED -> "未分配" to Color(0xFF757575)
+    AssignmentStatus.PENDING_ACCEPT -> "待接受" to Color(0xFFFB8C00)
+    AssignmentStatus.ACCEPTED -> "已接受" to Color(0xFF43A047)
+    null -> "未分配" to Color(0xFF757575)
 }
 
 @Composable

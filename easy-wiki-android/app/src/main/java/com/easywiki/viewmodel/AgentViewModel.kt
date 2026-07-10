@@ -9,6 +9,7 @@ import com.easywiki.model.AgentChatTurn
 import com.easywiki.model.AgentIntent
 import com.easywiki.model.AgentTaskSuggestion
 import com.easywiki.model.AgentTasksJson
+import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -138,7 +139,28 @@ class AgentViewModel(
     }
 
     private fun stripJsonBlock(reply: String): String {
-        return reply.replace(JSON_BLOCK_PATTERN, "").trim()
+        return unwrapJsonContent(reply).replace(JSON_BLOCK_PATTERN, "").trim()
+    }
+
+    /**
+     * 某些 LLM 会返回 JSON 包装格式，如 {"type":"markdown","content":"..."}，
+     * 此方法尝试提取其中的 content 字段，还原为纯 Markdown 文本。
+     */
+    private fun unwrapJsonContent(reply: String): String {
+        val trimmed = reply.trim()
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            try {
+                val jsonAdapter = moshi.adapter(Map::class.java)
+                val map = jsonAdapter.fromJson(trimmed)
+                val content = map?.get("content")
+                if (content is String) {
+                    return content
+                }
+            } catch (_: Exception) {
+                // not valid JSON, return as-is
+            }
+        }
+        return reply
     }
 
     companion object {

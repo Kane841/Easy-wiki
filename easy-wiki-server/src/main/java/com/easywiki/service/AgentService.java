@@ -15,6 +15,8 @@ import com.easywiki.exception.BusinessException;
 import com.easywiki.repository.GroupRepository;
 import com.easywiki.repository.TaskRepository;
 import com.easywiki.repository.WikiPageRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ public class AgentService {
     private final TaskRepository taskRepository;
     private final WikiPageRepository wikiPageRepository;
     private final TaskService taskService;
+    private final ObjectMapper objectMapper;
 
     public AgentService(AgentProperties agentProperties,
                         LlmClient llmClient,
@@ -39,7 +42,8 @@ public class AgentService {
                         GroupRepository groupRepository,
                         TaskRepository taskRepository,
                         WikiPageRepository wikiPageRepository,
-                        TaskService taskService) {
+                        TaskService taskService,
+                        ObjectMapper objectMapper) {
         this.agentProperties = agentProperties;
         this.llmClient = llmClient;
         this.membershipService = membershipService;
@@ -47,6 +51,7 @@ public class AgentService {
         this.taskRepository = taskRepository;
         this.wikiPageRepository = wikiPageRepository;
         this.taskService = taskService;
+        this.objectMapper = objectMapper;
     }
 
     public AgentChatResponse chat(Long groupId, Long userId, String message, List<AgentChatRequest.ChatTurn> history) {
@@ -73,6 +78,7 @@ public class AgentService {
         messages.add(new LlmClient.ChatMessage("user", message));
 
         String reply = llmClient.chat(systemPrompt, messages);
+        reply = unwrapJsonContent(reply);
         return new AgentChatResponse(reply, intent);
     }
 
@@ -140,5 +146,27 @@ public class AgentService {
         if (!agentProperties.isEnabled()) {
             throw new BusinessException(503, "Agent 助手未启用，请联系管理员配置 DEEPSEEK_API_KEY");
         }
+    }
+
+    /**
+     * 某些 LLM 会返回 JSON 包装格式，如 {"type":"markdown","content":"..."}，
+     * 此方法尝试提取其中的 content 字段，还原为纯 Markdown 文本。
+     */
+    String unwrapJsonContent(String reply) {
+        if (reply == null || reply.isBlank()) {
+            return reply;
+        }
+        String trimmed = reply.trim();
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            try {
+                JsonNode node = objectMapper.readTree(trimmed);
+                if (node.has("content") && node.get("content").isTextual()) {
+                    return node.get("content").asText();
+                }
+            } catch (Exception ignored) {
+                // not valid JSON, return as-is
+            }
+        }
+        return reply;
     }
 }
