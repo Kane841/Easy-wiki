@@ -20,6 +20,7 @@ public class TaskResponse {
     private Long creatorId;
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
+    private String groupName;
 
     public TaskResponse() {
     }
@@ -126,5 +127,13 @@ public class TaskResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 }

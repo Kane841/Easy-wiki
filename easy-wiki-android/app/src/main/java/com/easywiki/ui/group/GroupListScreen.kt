@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,6 +59,7 @@ fun GroupListScreen(
     onShowJoinDialog: () -> Unit,
     onHideJoinDialog: () -> Unit,
     onProfileClick: () -> Unit,
+    onMyTasksClick: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -88,6 +90,19 @@ fun GroupListScreen(
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Person,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("我的任务") },
+                            onClick = {
+                                showMenu = false
+                                onMyTasksClick()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Task,
                                     contentDescription = null
                                 )
                             }

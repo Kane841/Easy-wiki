@@ -173,4 +173,10 @@ interface EasyWikiApi {
         @Path("groupId") groupId: Long,
         @Body request: AgentTaskCreateRequest
     ): ApiResponse<List<Task>>
+
+    // My Tasks (cross-group)
+    @GET("api/v1/tasks/my")
+    suspend fun listMyTasks(
+        @Query("status") status: TaskStatus? = null
+    ): ApiResponse<List<Task>>
 }

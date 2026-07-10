@@ -9,6 +9,7 @@ import com.easywiki.enums.TaskPriority;
 import com.easywiki.enums.TaskStatus;
 import com.easywiki.exception.BusinessException;
 import com.easywiki.repository.GroupMemberRepository;
+import com.easywiki.repository.GroupRepository;
 import com.easywiki.repository.TaskLogRepository;
 import com.easywiki.repository.TaskRepository;
 import com.easywiki.repository.UserRepository;
@@ -27,19 +28,22 @@ public class TaskService {
     private final GroupMemberRepository memberRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
 
     public TaskService(TaskRepository taskRepository,
                        TaskLogRepository taskLogRepository,
                        GroupMembershipService membershipService,
                        GroupMemberRepository memberRepository,
                        NotificationService notificationService,
-                       UserRepository userRepository) {
+                       UserRepository userRepository,
+                       GroupRepository groupRepository) {
         this.taskRepository = taskRepository;
         this.taskLogRepository = taskLogRepository;
         this.membershipService = membershipService;
         this.memberRepository = memberRepository;
         this.notificationService = notificationService;
         this.userRepository = userRepository;
+        this.groupRepository = groupRepository;
     }
 
     @Transactional
@@ -80,6 +84,16 @@ public class TaskService {
             return taskRepository.findByGroupIdAndStatusOrderByCreatedAtDesc(groupId, status);
         }
         return taskRepository.findByGroupIdOrderByCreatedAtDesc(groupId);
+    }
+
+    public List<Task> listMyTasks(Long userId, TaskStatus status) {
+        List<Task> tasks;
+        if (status != null) {
+            tasks = taskRepository.findByAssigneeIdAndStatusOrderByCreatedAtDesc(userId, status);
+        } else {
+            tasks = taskRepository.findByAssigneeIdOrderByCreatedAtDesc(userId);
+        }
+        return tasks;
     }
 
     public Task getTask(Long groupId, Long userId, Long taskId) {

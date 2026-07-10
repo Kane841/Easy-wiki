@@ -109,6 +109,14 @@ class TaskRepository(
             response.data
         }
 
+    suspend fun listMyTasks(status: TaskStatus? = null): Result<List<Task>> = runCatching {
+        val response = api().listMyTasks(status)
+        if (response.code != 0 || response.data == null) {
+            throw IllegalStateException(response.message.ifBlank { "加载我的任务失败" })
+        }
+        response.data
+    }
+
     private suspend fun api(): EasyWikiApi {
         val serverUrl = settingsDataStore.getServerUrl()
         require(serverUrl.isNotBlank()) { "请先配置服务器地址" }

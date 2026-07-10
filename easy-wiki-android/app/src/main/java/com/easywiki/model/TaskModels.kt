@@ -30,7 +30,8 @@ data class Task(
     val assignmentStatus: AssignmentStatus?,
     val creatorId: Long?,
     val dueDate: String?,
-    val createdAt: String?
+    val createdAt: String?,
+    val groupName: String? = null
 )
 
 data class CreateTaskRequest(

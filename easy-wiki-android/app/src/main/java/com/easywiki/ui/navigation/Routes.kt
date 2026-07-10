@@ -8,6 +8,7 @@ object Routes {
     const val WIKI_DETAIL = "workspace/{groupId}/wiki/{pageId}"
     const val TASK_DETAIL = "workspace/{groupId}/tasks/{taskId}"
     const val PROFILE = "profile"
+    const val MY_TASKS = "my_tasks"
 
     fun workspace(groupId: Long) = "workspace/$groupId"
     fun wikiDetail(groupId: Long, pageId: Long) = "workspace/$groupId/wiki/$pageId"

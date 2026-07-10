@@ -19,6 +19,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     Optional<Task> findByIdAndGroupId(Long id, Long groupId);
 
+    List<Task> findByAssigneeIdAndStatusOrderByCreatedAtDesc(Long assigneeId, TaskStatus status);
+
+    List<Task> findByAssigneeIdOrderByCreatedAtDesc(Long assigneeId);
+
     List<Task> findByAssignmentStatus(AssignmentStatus assignmentStatus);
 
     @Query("SELECT t FROM Task t WHERE t.dueDate IS NOT NULL AND t.dueDate >= :start AND t.dueDate < :end AND t.status <> com.easywiki.enums.TaskStatus.DONE")

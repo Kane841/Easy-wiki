@@ -30,6 +30,7 @@ import com.easywiki.ui.auth.LoginScreen
 import com.easywiki.ui.auth.ServerConfigScreen
 import com.easywiki.ui.group.GroupListScreen
 import com.easywiki.ui.profile.ProfileScreen
+import com.easywiki.ui.task.MyTasksScreen
 import com.easywiki.ui.task.TaskDetailScreen
 import com.easywiki.ui.wiki.WikiDetailScreen
 import com.easywiki.ui.workspace.WorkspaceScreen
@@ -45,6 +46,8 @@ import com.easywiki.viewmodel.ChatViewModel
 import com.easywiki.viewmodel.ChatViewModelFactory
 import com.easywiki.viewmodel.GroupViewModel
 import com.easywiki.viewmodel.GroupViewModelFactory
+import com.easywiki.viewmodel.MyTasksViewModel
+import com.easywiki.viewmodel.MyTasksViewModelFactory
 import com.easywiki.viewmodel.NotificationViewModel
 import com.easywiki.viewmodel.NotificationViewModelFactory
 import com.easywiki.viewmodel.ProfileViewModel
@@ -172,6 +175,9 @@ fun EasyWikiNavGraph(
                     onProfileClick = {
                         navController.navigate(Routes.PROFILE)
                     },
+                    onMyTasksClick = {
+                        navController.navigate(Routes.MY_TASKS)
+                    },
                     onLogout = {
                         webSocketManager.disconnect()
                         authViewModel.logout()
@@ -205,6 +211,23 @@ fun EasyWikiNavGraph(
                 ProfileScreen(
                     uiState = profileUiState,
                     onLoad = profileViewModel::loadProfile,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Routes.MY_TASKS) {
+                val myTasksViewModel: MyTasksViewModel = viewModel(
+                    factory = MyTasksViewModelFactory(taskRepository)
+                )
+                val myTasksUiState by myTasksViewModel.uiState.collectAsState()
+
+                MyTasksScreen(
+                    uiState = myTasksUiState,
+                    onRefresh = myTasksViewModel::loadTasks,
+                    onTabSelected = myTasksViewModel::selectTab,
+                    onTaskClick = { groupId, taskId ->
+                        navController.navigate(Routes.taskDetail(groupId, taskId))
+                    },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
@@ -324,9 +347,13 @@ fun EasyWikiNavGraph(
             ) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getLong("groupId") ?: return@composable
                 val taskId = backStackEntry.arguments?.getLong("taskId") ?: return@composable
-                val workspaceEntry = navController.getBackStackEntry(Routes.WORKSPACE)
+                val viewModelStoreOwner = try {
+                    navController.getBackStackEntry(Routes.WORKSPACE)
+                } catch (e: Exception) {
+                    backStackEntry
+                }
                 val taskViewModel: TaskViewModel = viewModel(
-                    viewModelStoreOwner = workspaceEntry,
+                    viewModelStoreOwner = viewModelStoreOwner,
                     factory = TaskViewModelFactory(groupId, taskRepository)
                 )
                 val detailState by taskViewModel.detailState.collectAsState()
