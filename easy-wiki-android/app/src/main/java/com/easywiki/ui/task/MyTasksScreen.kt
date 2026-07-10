@@ -12,13 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -83,12 +84,12 @@ fun MyTasksScreen(
                 Tab(
                     selected = uiState.selectedTab == 0,
                     onClick = { onTabSelected(0) },
-                    text = { Text("进行中") }
+                    text = { Text("进行中 (${uiState.inProgressTasks.size})") }
                 )
                 Tab(
                     selected = uiState.selectedTab == 1,
                     onClick = { onTabSelected(1) },
-                    text = { Text("已完成") }
+                    text = { Text("已完成 (${uiState.doneTasks.size})") }
                 )
             }
 
@@ -107,7 +108,7 @@ fun MyTasksScreen(
                     else -> {
                         LazyColumn(
                             contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(tasks, key = { it.id }) { task ->
                                 MyTaskCard(
@@ -142,18 +143,16 @@ private fun MyTaskCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .background(priorityColor(task.priority))
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+                PriorityChip(priority = task.priority)
+                Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = task.title, style = MaterialTheme.typography.titleMedium)
                     task.description?.takeIf { it.isNotBlank() }?.let { desc ->
@@ -177,7 +176,7 @@ private fun MyTaskCard(
             ) {
                 task.groupName?.takeIf { it.isNotBlank() }?.let { name ->
                     Text(
-                        text = "群组: $name",
+                        text = name,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -187,21 +186,28 @@ private fun MyTaskCard(
                     if (task.status == TaskStatus.DONE) {
                         task.assigneeId?.let { id ->
                             Text(
-                                text = "负责人: #$id",
+                                text = "#$id",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     } else {
                         val (statusLabel, statusColor) = myAssignmentStatusInfo(task.assignmentStatus)
-                        Text(
-                            text = statusLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = statusColor
-                        )
-                        task.assigneeId?.let { id ->
+                        Box(
+                            modifier = Modifier
+                                .background(statusColor.copy(alpha = 0.12f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
                             Text(
-                                text = "负责人: #$id",
+                                text = statusLabel,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = statusColor
+                            )
+                        }
+                        task.assigneeId?.let { id ->
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "#$id",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

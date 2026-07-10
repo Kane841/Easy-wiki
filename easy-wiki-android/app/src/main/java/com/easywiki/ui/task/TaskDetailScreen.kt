@@ -1,8 +1,5 @@
 package com.easywiki.ui.task
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,17 +7,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.easywiki.viewmodel.TaskDetailUiState
 import com.easywiki.viewmodel.canAccept
@@ -103,40 +105,98 @@ fun TaskDetailScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    // ─── Info Card ───
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .background(priorityColor(task.priority))
-                        )
-                        Text(
-                            text = "优先级: ${task.priority?.name ?: "未设置"}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            // Priority
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "优先级",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                PriorityChip(priority = task.priority)
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Status
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "状态",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                Text(
+                                    text = task.status.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Assignment status
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "分配",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                Text(
+                                    text = task.assignmentStatus?.name ?: "未分配",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            task.assigneeId?.let { assigneeId ->
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "负责人",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(end = 12.dp)
+                                    )
+                                    Text(
+                                        text = "#$assigneeId",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "状态: ${task.status.name}", style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        text = "分配状态: ${task.assignmentStatus?.name ?: "未分配"}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    task.assigneeId?.let { assigneeId ->
-                        Text(text = "负责人 ID: $assigneeId", style = MaterialTheme.typography.bodyMedium)
-                    }
-
+                    // ─── Description Card ───
                     task.description?.takeIf { it.isNotBlank() }?.let { desc ->
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "描述", style = MaterialTheme.typography.titleSmall)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = desc, style = MaterialTheme.typography.bodyLarge)
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "描述",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = desc, style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // ─── Actions ───
                     if (task.canAssign()) {
                         OutlinedTextField(
                             value = uiState.assigneeIdInput,
@@ -149,6 +209,7 @@ fun TaskDetailScreen(
                         Button(
                             onClick = { onAssign(taskId) },
                             enabled = !uiState.isActionLoading,
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("分配任务")
@@ -160,6 +221,7 @@ fun TaskDetailScreen(
                         Button(
                             onClick = { onClaim(taskId) },
                             enabled = !uiState.isActionLoading,
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("认领任务")
@@ -171,20 +233,13 @@ fun TaskDetailScreen(
                         Button(
                             onClick = { onAccept(taskId) },
                             enabled = !uiState.isActionLoading,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("接受任务")
-                        }
-                    }
-
-                    if (task.canReject(currentUserId)) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = { onReject(taskId) },
-                            enabled = !uiState.isActionLoading,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("拒绝任务")
                         }
                     }
 
@@ -193,17 +248,37 @@ fun TaskDetailScreen(
                         Button(
                             onClick = { onComplete(taskId) },
                             enabled = !uiState.isActionLoading,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("完成任务")
                         }
                     }
 
+                    if (task.canReject(currentUserId)) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { onReject(taskId) },
+                            enabled = !uiState.isActionLoading,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("拒绝任务")
+                        }
+                    }
+
                     if (task.canGiveUp(currentUserId)) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(
+                        OutlinedButton(
                             onClick = { onGiveUp(taskId) },
                             enabled = !uiState.isActionLoading,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("放弃任务")

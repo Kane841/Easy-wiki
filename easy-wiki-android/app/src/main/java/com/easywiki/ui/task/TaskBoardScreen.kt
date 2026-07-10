@@ -1,6 +1,7 @@
 package com.easywiki.ui.task
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,14 +13,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -39,12 +41,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.easywiki.model.AssignmentStatus
 import com.easywiki.model.Task
 import com.easywiki.model.TaskPriority
 import com.easywiki.model.TaskStatus
+import com.easywiki.ui.theme.priorityHigh
+import com.easywiki.ui.theme.priorityLow
+import com.easywiki.ui.theme.priorityMedium
+import com.easywiki.ui.theme.priorityNone
+import com.easywiki.ui.theme.priorityUrgent
 import com.easywiki.viewmodel.TaskBoardUiState
 import com.easywiki.viewmodel.TaskViewModel
 
@@ -88,10 +96,13 @@ fun TaskBoardScreen(
         ) {
             TabRow(selectedTabIndex = selectedIndex) {
                 TAB_STATUSES.forEachIndexed { index, status ->
+                    val count = taskViewModel.tasksForTab(status).size
                     Tab(
                         selected = selectedIndex == index,
                         onClick = { taskViewModel.selectTab(status) },
-                        text = { Text(TAB_LABELS[status] ?: status.name) }
+                        text = {
+                            Text("${TAB_LABELS[status] ?: status.name} ($count)")
+                        }
                     )
                 }
             }
@@ -112,7 +123,7 @@ fun TaskBoardScreen(
                     else -> {
                         LazyColumn(
                             contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(tasks, key = { it.id }) { task ->
                                 TaskCard(task = task, onClick = { onTaskClick(task.id) })
@@ -152,67 +163,108 @@ private fun TaskCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(priorityColor(task.priority))
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = task.title, style = MaterialTheme.typography.titleMedium)
-                task.description?.takeIf { it.isNotBlank() }?.let { desc ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = desc,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2
-                    )
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Priority Chip
+                PriorityChip(priority = task.priority)
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = task.title, style = MaterialTheme.typography.titleMedium)
+                    task.description?.takeIf { it.isNotBlank() }?.let { desc ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = desc,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2
+                        )
+                    }
                 }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                if (task.status == TaskStatus.DONE) {
-                    task.assigneeId?.let { id ->
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Bottom row: assignment status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Assignment status badge
+                if (task.status != TaskStatus.DONE) {
+                    val (statusLabel, statusColor) = assignmentStatusInfo(task.assignmentStatus)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(statusColor.copy(alpha = 0.12f))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
                         Text(
-                            text = "负责人: #$id",
+                            text = statusLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = statusColor
                         )
                     }
                 } else {
-                    val (statusLabel, statusColor) = assignmentStatusInfo(task.assignmentStatus)
+                    Spacer(modifier = Modifier.width(1.dp))
+                }
+
+                task.assigneeId?.let { id ->
                     Text(
-                        text = statusLabel,
+                        text = "#$id",
                         style = MaterialTheme.typography.labelSmall,
-                        color = statusColor
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    task.assigneeId?.let { id ->
-                        Text(
-                            text = "负责人: #$id",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
         }
     }
 }
 
+/**
+ * Colored priority chip used across task screens.
+ */
+@Composable
+fun PriorityChip(
+    priority: TaskPriority?,
+    modifier: Modifier = Modifier
+) {
+    val color = priorityColor(priority)
+    val label = when (priority) {
+        TaskPriority.URGENT -> "紧急"
+        TaskPriority.HIGH -> "高"
+        TaskPriority.MEDIUM -> "中"
+        TaskPriority.LOW -> "低"
+        null -> "无"
+    }
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(color.copy(alpha = 0.15f))
+            .border(1.dp, color.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color
+        )
+    }
+}
+
 @Composable
 fun priorityColor(priority: TaskPriority?): Color = when (priority) {
-    TaskPriority.URGENT -> Color(0xFFE53935)
-    TaskPriority.HIGH -> Color(0xFFFB8C00)
-    TaskPriority.MEDIUM -> Color(0xFF1E88E5)
-    TaskPriority.LOW -> Color(0xFF78909C)
-    null -> Color(0xFFBDBDBD)
+    TaskPriority.URGENT -> priorityUrgent
+    TaskPriority.HIGH -> priorityHigh
+    TaskPriority.MEDIUM -> priorityMedium
+    TaskPriority.LOW -> priorityLow
+    null -> priorityNone
 }
 
 private fun assignmentStatusInfo(status: AssignmentStatus?): Pair<String, Color> = when (status) {
@@ -251,14 +303,37 @@ private fun CreateTaskDialog(
                     label = { Text("描述（可选）") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text("优先级", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TaskPriority.entries.forEach { p ->
-                        TextButton(onClick = { priority = p }) {
+                        val isSelected = priority == p
+                        val color = priorityColor(p)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isSelected) color.copy(alpha = 0.18f)
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                                .then(
+                                    if (isSelected) Modifier.border(
+                                        1.5.dp, color, RoundedCornerShape(8.dp)
+                                    ) else Modifier
+                                )
+                                .clickable { priority = p }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
                             Text(
-                                text = p.name,
-                                color = if (priority == p) priorityColor(p) else MaterialTheme.colorScheme.onSurface
+                                text = when (p) {
+                                    TaskPriority.URGENT -> "紧急"
+                                    TaskPriority.HIGH -> "高"
+                                    TaskPriority.MEDIUM -> "中"
+                                    TaskPriority.LOW -> "低"
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (isSelected) color else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
