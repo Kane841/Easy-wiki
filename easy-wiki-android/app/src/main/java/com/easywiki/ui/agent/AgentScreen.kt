@@ -170,7 +170,10 @@ private fun AgentBubble(
             if (isUser) {
                 Text(text = message.content)
             } else {
-                MarkdownContent(markdown = message.content)
+                MarkdownContent(
+                    markdown = message.content,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 
