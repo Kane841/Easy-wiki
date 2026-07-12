@@ -1,0 +1,7 @@
+# 演示数据 Profile：启动时全量覆盖写入演示数据
+# 用法: mvn spring-boot:run -Dspring-boot.run.profiles=demo
+# 或: java -jar app.jar --spring.profiles.active=demo
+easywiki:
+  demo:
+    seed: true
+    password: Demo@2026

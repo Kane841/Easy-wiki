@@ -17,6 +17,9 @@ spring:
         format_sql: true
 
 easywiki:
+  demo:
+    seed: true
+    password: Demo@2026
   jwt:
     secret: ${JWT_SECRET:dev-secret-change-in-production-min-32-chars!!}
     expiration-ms: 604800000
